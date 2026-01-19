@@ -121,6 +121,7 @@ export const getDashboardPath = (role: string): string => {
       return '/admin/dashboard';
     case 'vendor':
       return '/vendor/dashboard';
+    case 'user':
     case 'company':
     case 'companies':
       return '/companies/dashboard';
