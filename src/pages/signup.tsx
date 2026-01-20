@@ -17,6 +17,8 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [gstNumber, setGstNumber] = useState("");
+  const [aadharNumber, setAadharNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,18 +41,38 @@ export default function SignupPage() {
       return;
     }
 
+    // Validate GST and Aadhar for vendor and company
+    if (selectedRole === 'vendor' || selectedRole === 'company') {
+      if (!gstNumber || gstNumber.length !== 15) {
+        setError("Please enter a valid 15-character GST number");
+        return;
+      }
+      if (!aadharNumber || aadharNumber.length !== 12 || !/^\d{12}$/.test(aadharNumber)) {
+        setError("Please enter a valid 12-digit Aadhar number");
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
-      // Map 'company' to 'companies' for API if needed, or check what the API expects
-      const apiRole = selectedRole === 'company' ? 'company' : selectedRole;
+      // Map 'company' to 'user' for API as per your backend
+      const apiRole = selectedRole === 'company' ? 'user' : selectedRole;
       
-      const response = await signup({
+      const signupData: any = {
         name,
         email,
         password,
-        role: apiRole as 'admin' | 'vendor' | 'company',
-      });
+        role: apiRole as 'admin' | 'vendor' | 'user',
+      };
+
+      // Add GST and Aadhar for vendor and company roles
+      if (selectedRole === 'vendor' || selectedRole === 'company') {
+        signupData.gstNumber = gstNumber;
+        signupData.aadharNumber = aadharNumber;
+      }
+
+      const response = await signup(signupData);
 
       if (response.success && response.data.user) {
         // Redirect based on user role
@@ -196,6 +218,58 @@ export default function SignupPage() {
                     />
                   </div>
                 </div>
+
+                {/* GST and Aadhar fields for vendor and company */}
+                {(selectedRole === 'vendor' || selectedRole === 'company') && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="gstNumber" className="text-sm font-medium text-foreground">
+                        GST Number
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="gstNumber"
+                          type="text"
+                          placeholder="Enter GST number (e.g., 22AAAAA0000A1Z5)"
+                          className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
+                          value={gstNumber}
+                          onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                          required
+                          disabled={isLoading}
+                          maxLength={15}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Enter 15-character GST identification number
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="aadharNumber" className="text-sm font-medium text-foreground">
+                        Aadhar Number
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="aadharNumber"
+                          type="text"
+                          placeholder="Enter 12-digit Aadhar number"
+                          className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
+                          value={aadharNumber}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setAadharNumber(value);
+                          }}
+                          required
+                          disabled={isLoading}
+                          maxLength={12}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Enter 12 digits without spaces
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-sm font-medium text-foreground">

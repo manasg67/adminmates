@@ -6,12 +6,13 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
-  name: string;
-  email: string;
-  password: string;
-  role: 'admin' | 'vendor' | 'company';
-}
-
+    name: string;
+    email: string;
+    password: string;
+    role: 'admin' | 'vendor' | 'user';
+    gstNumber?: string;
+    aadharNumber?: string;
+  }
 export interface User {
   id: string;
   name: string;
