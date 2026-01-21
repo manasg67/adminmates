@@ -25,7 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { getUsers, approveUser, rejectUser, bulkApprove, bulkReject } from "@/lib/api"
+import { getUsers, approveUser, rejectUser, bulkApprove, bulkReject, createUser } from "@/lib/api"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Building2 as BuildingIcon } from "lucide-react"
 
 export default function CompaniesPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -37,6 +47,16 @@ export default function CompaniesPage() {
   const [page, setPage] = useState(1)
   const [, setTotalPages] = useState(1)
   const [totalUsers, setTotalUsers] = useState(0)
+
+  // Add Company State
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [newCompany, setNewCompany] = useState({
+    name: "",
+    email: "",
+    gstNumber: "",
+    aadharNumber: "",
+  })
 
   // Calculate stats from companies data
   const stats = [
@@ -149,6 +169,30 @@ export default function CompaniesPage() {
     }
   }
 
+  const handleCreateCompany = async () => {
+    try {
+      setIsCreating(true)
+      const response = await createUser({
+        name: newCompany.name,
+        email: newCompany.email,
+        gstNumber: newCompany.gstNumber,
+        aadharNumber: newCompany.aadharNumber,
+      })
+
+      if (response.success) {
+        // Refresh the list and close dialog
+        setCreateDialogOpen(false)
+        setNewCompany({ name: "", email: "", gstNumber: "", aadharNumber: "" })
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error("Failed to create company", error)
+      alert(error instanceof Error ? error.message : "Failed to create company")
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-8">
@@ -173,6 +217,7 @@ export default function CompaniesPage() {
               </Button>
               <Button
                 size="sm"
+                onClick={() => setCreateDialogOpen(true)}
                 className="gap-2 rounded-lg bg-linear-to-r from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-500/25 hover:from-blue-600 hover:to-cyan-700"
               >
                 <Plus className="h-4 w-4" />
@@ -278,6 +323,114 @@ export default function CompaniesPage() {
               onReject={handleReject}
             />
           )}
+
+          {/* Create Company Dialog */}
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogContent className="rounded-2xl border-slate-200 sm:max-w-lg dark:border-slate-700">
+              <DialogHeader>
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-cyan-600 shadow-lg shadow-blue-500/30">
+                  <BuildingIcon className="h-7 w-7 text-white" />
+                </div>
+                <DialogTitle className="text-center text-xl">
+                  Create New Company
+                </DialogTitle>
+                <DialogDescription className="text-center">
+                  Add a new company with their details.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="name"
+                    placeholder="Enter full name"
+                    value={newCompany.name}
+                    onChange={(e) =>
+                      setNewCompany((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    className="rounded-lg border-slate-200 focus:border-blue-300 focus:ring-blue-200 dark:border-slate-700"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter email address"
+                    value={newCompany.email}
+                    onChange={(e) =>
+                      setNewCompany((prev) => ({ ...prev, email: e.target.value }))
+                    }
+                    className="rounded-lg border-slate-200 focus:border-blue-300 focus:ring-blue-200 dark:border-slate-700"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gstNumber" className="text-sm font-medium">
+                    GST Number
+                  </Label>
+                  <Input
+                    id="gstNumber"
+                    placeholder="Enter GST number"
+                    value={newCompany.gstNumber}
+                    onChange={(e) =>
+                      setNewCompany((prev) => ({ ...prev, gstNumber: e.target.value }))
+                    }
+                    className="rounded-lg border-slate-200 focus:border-blue-300 focus:ring-blue-200 dark:border-slate-700"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="aadharNumber" className="text-sm font-medium">
+                    Aadhar Number
+                  </Label>
+                  <Input
+                    id="aadharNumber"
+                    placeholder="Enter Aadhar number"
+                    value={newCompany.aadharNumber}
+                    onChange={(e) =>
+                      setNewCompany((prev) => ({ ...prev, aadharNumber: e.target.value }))
+                    }
+                    className="rounded-lg border-slate-200 focus:border-blue-300 focus:ring-blue-200 dark:border-slate-700"
+                  />
+                </div>
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  variant="outline"
+                  onClick={() => setCreateDialogOpen(false)}
+                  className="rounded-lg bg-transparent"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateCompany}
+                  disabled={
+                    !newCompany.name.trim() ||
+                    !newCompany.email.trim() ||
+                    !newCompany.gstNumber.trim() ||
+                    !newCompany.aadharNumber.trim() ||
+                    isCreating
+                  }
+                  className="gap-2 rounded-lg bg-linear-to-r from-blue-500 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-700"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <BuildingIcon className="h-4 w-4" />
+                      Create Company
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
     </AdminLayout>
   )

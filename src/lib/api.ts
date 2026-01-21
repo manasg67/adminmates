@@ -282,6 +282,68 @@ export const getUsers = async (
   return await response.json();
 };
 
+export interface SubAdmin {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  isApproved: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  approvedAt?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubAdminsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    subAdmins: SubAdmin[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalSubAdmins: number;
+      limit: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  };
+}
+
+// Get sub-admins
+export const getSubAdmins = async (
+  page: number = 1,
+  limit: number = 10,
+  search?: string
+): Promise<SubAdminsResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (search) {
+    params.append('search', search);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/sub-admins?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch sub-admins' }));
+    throw new Error(error.message || 'Failed to fetch sub-admins');
+  }
+
+  return await response.json();
+};
+
 // Approve user/vendor
 export const approveUser = async (id: string): Promise<{ success: boolean; message: string }> => {
   const response = await fetch(`${API_BASE_URL}/api/auth/approve/${id}`, {
@@ -343,6 +405,69 @@ export const bulkReject = async (userIds: string[], reason?: string): Promise<{ 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to bulk reject' }));
     throw new Error(error.message || 'Failed to bulk reject');
+  }
+
+  return await response.json();
+};
+
+// Create user (company)
+export const createUser = async (data: { name: string; email: string; gstNumber: string; aadharNumber: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/create-user`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create company' }));
+    throw new Error(error.message || 'Failed to create company');
+  }
+
+  return await response.json();
+};
+
+// Create vendor
+export const createVendor = async (data: { name: string; email: string; gstNumber: string; aadharNumber: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/create-vendor`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create vendor' }));
+    throw new Error(error.message || 'Failed to create vendor');
+  }
+
+  return await response.json();
+};
+
+// Create sub-admin
+export const createSubAdmin = async (data: { name: string; email: string }): Promise<{ success: boolean; message: string; data?: SubAdmin }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/create-sub-admin`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create sub-admin' }));
+    throw new Error(error.message || 'Failed to create sub-admin');
+  }
+
+  return await response.json();
+};
+
+// Toggle sub-admin status
+export const toggleSubAdminStatus = async (id: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/toggle-status/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to toggle status' }));
+    throw new Error(error.message || 'Failed to toggle status');
   }
 
   return await response.json();

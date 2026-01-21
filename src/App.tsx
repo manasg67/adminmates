@@ -11,6 +11,7 @@ import VendorDashboard from './pages/vendor/dashboard'
 import CompaniesDashboard from './pages/companies/dashboard'
 import VendorsPage from './pages/admin/vendors'
 import CompaniesPage from './pages/admin/companies'
+import SubAdminsPage from './pages/admin/sub-admin'
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           <Route path="/admin/companies" element={<CompaniesPage />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/companies/dashboard" element={<CompaniesDashboard />} />
+          <Route path="/admin/sub-admins" element={<SubAdminsPage />} />  
 
           {/* Products page (can be accessed by any user type) */}
           <Route path="/products" element={<ProductListingPage />} />

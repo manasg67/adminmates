@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { getVendors, getUsers, removeAuthToken, removeUserData } from "@/lib/api"
+import { getVendors, getUsers, removeAuthToken, removeUserData, getUserData } from "@/lib/api"
 
 interface AdminSidebarProps {
   isExpanded: boolean
@@ -54,6 +54,8 @@ export function AdminSidebar({
   const [pendingCompaniesCount, setPendingCompaniesCount] = useState(0)
   const [pendingVendorsCount, setPendingVendorsCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const user = getUserData()
+  const isAdmin = user?.role === 'admin'
 
   // Handle logout
   const handleLogout = (e: React.MouseEvent) => {
@@ -118,6 +120,11 @@ export function AdminSidebar({
       icon: Users,
       badge: pendingVendorsCount > 0 ? pendingVendorsCount.toString() : undefined,
     },
+    ...(isAdmin ? [{
+      title: "Add Sub-Admin",
+      href: "/admin/sub-admins",
+      icon: Users,
+    }] : []),
   ]
 
   return (

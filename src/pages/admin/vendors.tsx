@@ -25,7 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { getVendors, approveUser, rejectUser, bulkApprove, bulkReject } from "@/lib/api"
+import { getVendors, approveUser, rejectUser, bulkApprove, bulkReject, createVendor } from "@/lib/api"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { UserPlus } from "lucide-react"
 
 export default function VendorsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -37,6 +47,16 @@ export default function VendorsPage() {
   const [page, setPage] = useState(1)
   const [, setTotalPages] = useState(1)
   const [totalVendors, setTotalVendors] = useState(0)
+  
+  // Add Vendor State
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [newVendor, setNewVendor] = useState({
+    name: "",
+    email: "",
+    gstNumber: "",
+    aadharNumber: "",
+  })
 
   // Calculate stats from vendors data
   const stats = [
@@ -149,6 +169,30 @@ export default function VendorsPage() {
     }
   }
 
+  const handleCreateVendor = async () => {
+    try {
+      setIsCreating(true)
+      const response = await createVendor({
+        name: newVendor.name,
+        email: newVendor.email,
+        gstNumber: newVendor.gstNumber,
+        aadharNumber: newVendor.aadharNumber,
+      })
+
+      if (response.success) {
+        // Refresh the list and close dialog
+        setCreateDialogOpen(false)
+        setNewVendor({ name: "", email: "", gstNumber: "", aadharNumber: "" })
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error("Failed to create vendor", error)
+      alert(error instanceof Error ? error.message : "Failed to create vendor")
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-8">
@@ -173,6 +217,7 @@ export default function VendorsPage() {
             </Button>
             <Button
               size="sm"
+              onClick={() => setCreateDialogOpen(true)}
               className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:from-violet-600 hover:to-purple-700"
             >
               <Plus className="h-4 w-4" />
@@ -278,6 +323,114 @@ export default function VendorsPage() {
             onReject={handleReject}
           />
         )}
+
+        {/* Create Vendor Dialog */}
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="rounded-2xl border-slate-200 sm:max-w-lg dark:border-slate-700">
+            <DialogHeader>
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30">
+                <UserPlus className="h-7 w-7 text-white" />
+              </div>
+              <DialogTitle className="text-center text-xl">
+                Create New Vendor
+              </DialogTitle>
+              <DialogDescription className="text-center">
+                Add a new vendor with their details.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Full Name
+                </Label>
+                <Input
+                  id="name"
+                  placeholder="Enter full name"
+                  value={newVendor.name}
+                  onChange={(e) =>
+                    setNewVendor((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={newVendor.email}
+                  onChange={(e) =>
+                    setNewVendor((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                  className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gstNumber" className="text-sm font-medium">
+                  GST Number
+                </Label>
+                <Input
+                  id="gstNumber"
+                  placeholder="Enter GST number"
+                  value={newVendor.gstNumber}
+                  onChange={(e) =>
+                    setNewVendor((prev) => ({ ...prev, gstNumber: e.target.value }))
+                  }
+                  className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="aadharNumber" className="text-sm font-medium">
+                  Aadhar Number
+                </Label>
+                <Input
+                  id="aadharNumber"
+                  placeholder="Enter Aadhar number"
+                  value={newVendor.aadharNumber}
+                  onChange={(e) =>
+                    setNewVendor((prev) => ({ ...prev, aadharNumber: e.target.value }))
+                  }
+                  className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setCreateDialogOpen(false)}
+                className="rounded-lg bg-transparent"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateVendor}
+                disabled={
+                  !newVendor.name.trim() ||
+                  !newVendor.email.trim() ||
+                  !newVendor.gstNumber.trim() ||
+                  !newVendor.aadharNumber.trim() ||
+                  isCreating
+                }
+                className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    Create Vendor
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   )
