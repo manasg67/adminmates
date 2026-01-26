@@ -55,7 +55,7 @@ export default function VendorsPage() {
     name: "",
     email: "",
     gstNumber: "",
-    panCard: "",
+    panCard: "", // Add panCard to the state
   })
 
   // Calculate stats from vendors data
@@ -176,7 +176,7 @@ export default function VendorsPage() {
         name: newVendor.name,
         email: newVendor.email,
         gstNumber: newVendor.gstNumber,
-        panCard: newVendor.panCard,
+        panCard: newVendor.panCard, // Add panCard property
       })
 
       if (response.success) {
@@ -382,20 +382,6 @@ export default function VendorsPage() {
                   className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="panCard" className="text-sm font-medium">
-                  PAN Card Number
-                </Label>
-                <Input
-                  id="panCard"
-                  placeholder="Enter PAN Card number"
-                  value={newVendor.panCard}
-                  onChange={(e) =>
-                    setNewVendor((prev) => ({ ...prev, panCard: e.target.value }))
-                  }
-                  className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
-                />
-              </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
@@ -411,7 +397,6 @@ export default function VendorsPage() {
                   !newVendor.name.trim() ||
                   !newVendor.email.trim() ||
                   !newVendor.gstNumber.trim() ||
-                  !newVendor.panCard.trim() ||
                   isCreating
                 }
                 className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"
