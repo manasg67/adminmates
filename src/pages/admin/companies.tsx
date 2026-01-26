@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { getUsers, approveUser, rejectUser, bulkApprove, bulkReject, createUser } from "@/lib/api"
+import { getCompanies, approveUser, rejectUser, bulkApprove, bulkReject, createUser } from "@/lib/api"
 import {
   Dialog,
   DialogContent,
@@ -55,7 +55,8 @@ export default function CompaniesPage() {
     name: "",
     email: "",
     gstNumber: "",
-    aadharNumber: "",
+    panCard: "",
+    companyLocation: "",
   })
 
   // Calculate stats from companies data
@@ -101,11 +102,11 @@ export default function CompaniesPage() {
       setError(null)
 
       const statusParam = status && status !== "all" ? status : undefined
-      const response = await getUsers(statusParam as "pending" | "approved" | "rejected" | undefined, pageNum, 10)
+      const response = await getCompanies(statusParam as "pending" | "approved" | "rejected" | undefined, pageNum, 10)
 
       if (response.success) {
         setCompanies(response.data as DataItem[])
-        setTotalUsers(response.totalUsers)
+        setTotalUsers(response.totalCompanies)
         setTotalPages(response.totalPages)
         setPage(response.currentPage)
       }
@@ -176,13 +177,14 @@ export default function CompaniesPage() {
         name: newCompany.name,
         email: newCompany.email,
         gstNumber: newCompany.gstNumber,
-        aadharNumber: newCompany.aadharNumber,
+        panCard: newCompany.panCard,
+        companyLocation: newCompany.companyLocation,
       })
 
       if (response.success) {
         // Refresh the list and close dialog
         setCreateDialogOpen(false)
-        setNewCompany({ name: "", email: "", gstNumber: "", aadharNumber: "" })
+        setNewCompany({ name: "", email: "", gstNumber: "", panCard: "", companyLocation: "" })
         window.location.reload()
       }
     } catch (error) {
@@ -383,15 +385,29 @@ export default function CompaniesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="aadharNumber" className="text-sm font-medium">
-                    Aadhar Number
+                  <Label htmlFor="panCard" className="text-sm font-medium">
+                    PAN Card Number
                   </Label>
                   <Input
-                    id="aadharNumber"
-                    placeholder="Enter Aadhar number"
-                    value={newCompany.aadharNumber}
+                    id="panCard"
+                    placeholder="Enter PAN Card number"
+                    value={newCompany.panCard}
                     onChange={(e) =>
-                      setNewCompany((prev) => ({ ...prev, aadharNumber: e.target.value }))
+                      setNewCompany((prev) => ({ ...prev, panCard: e.target.value }))
+                    }
+                    className="rounded-lg border-slate-200 focus:border-blue-300 focus:ring-blue-200 dark:border-slate-700"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyLocation" className="text-sm font-medium">
+                    Company Location
+                  </Label>
+                  <Input
+                    id="companyLocation"
+                    placeholder="Enter company location"
+                    value={newCompany.companyLocation}
+                    onChange={(e) =>
+                      setNewCompany((prev) => ({ ...prev, companyLocation: e.target.value }))
                     }
                     className="rounded-lg border-slate-200 focus:border-blue-300 focus:ring-blue-200 dark:border-slate-700"
                   />
@@ -411,7 +427,8 @@ export default function CompaniesPage() {
                     !newCompany.name.trim() ||
                     !newCompany.email.trim() ||
                     !newCompany.gstNumber.trim() ||
-                    !newCompany.aadharNumber.trim() ||
+                    !newCompany.panCard.trim() ||
+                    !newCompany.companyLocation.trim() ||
                     isCreating
                   }
                   className="gap-2 rounded-lg bg-linear-to-r from-blue-500 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-700"

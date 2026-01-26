@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { getVendors, getUsers, removeAuthToken, removeUserData, getUserData } from "@/lib/api"
+import { getVendors, getCompanies, removeAuthToken, removeUserData, getUserData } from "@/lib/api"
 
 interface AdminSidebarProps {
   isExpanded: boolean
@@ -72,17 +72,17 @@ export function AdminSidebar({
     const fetchPendingCounts = async () => {
       try {
         setIsLoading(true)
-        const [vendorsResponse, usersResponse] = await Promise.all([
+        const [vendorsResponse, companiesResponse] = await Promise.all([
           getVendors('pending', 1, 1), // Only need count, so limit=1
-          getUsers('pending', 1, 1), // Only need count, so limit=1
+          getCompanies('pending', 1, 1), // Only need count, so limit=1
         ])
 
         if (vendorsResponse.success) {
           setPendingVendorsCount(vendorsResponse.pagination?.totalRecords || vendorsResponse.count || 0)
         }
 
-        if (usersResponse.success) {
-          setPendingCompaniesCount(usersResponse.pagination?.totalRecords || usersResponse.count || 0)
+        if (companiesResponse.success) {
+          setPendingCompaniesCount(companiesResponse.pagination?.totalRecords || companiesResponse.count || 0)
         }
       } catch (err) {
         console.error("Error fetching pending counts:", err)

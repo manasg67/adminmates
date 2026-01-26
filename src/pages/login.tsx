@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {  Mail, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Check for pending approval message from signup
+  useEffect(() => {
+    const pendingMessage = localStorage.getItem('pendingApprovalMessage');
+    if (pendingMessage) {
+      setSuccessMessage(pendingMessage);
+      localStorage.removeItem('pendingApprovalMessage');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +53,12 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome back</h1>
             <p className="text-muted-foreground">Sign in to your account to continue</p>
           </div>
+
+          {successMessage && (
+            <div className="bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 px-4 py-3 rounded-lg text-sm">
+              {successMessage}
+            </div>
+          )}
 
           {error && (
             <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">

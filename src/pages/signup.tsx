@@ -18,7 +18,8 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [gstNumber, setGstNumber] = useState("");
-  const [aadharNumber, setAadharNumber] = useState("");
+  const [panCard, setPanCard] = useState("");
+  const [companyLocation, setCompanyLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -41,14 +42,18 @@ export default function SignupPage() {
       return;
     }
 
-    // Validate GST and Aadhar for vendor and company
+    // Validate GST, PAN Card and Company Location for vendor and company
     if (selectedRole === 'vendor' || selectedRole === 'company') {
       if (!gstNumber || gstNumber.length !== 15) {
         setError("Please enter a valid 15-character GST number");
         return;
       }
-      if (!aadharNumber || aadharNumber.length !== 12 || !/^\d{12}$/.test(aadharNumber)) {
-        setError("Please enter a valid 12-digit Aadhar number");
+      if (!panCard || panCard.length !== 12) {
+        setError("Please enter a valid 12-character PAN Card number");
+        return;
+      }
+      if (!companyLocation || companyLocation.trim() === '') {
+        setError("Please enter company location");
         return;
       }
     }
@@ -56,28 +61,36 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Map 'company' to 'user' for API as per your backend
-      const apiRole = selectedRole === 'company' ? 'user' : selectedRole;
-      
       const signupData: any = {
         name,
         email,
         password,
-        role: apiRole as 'admin' | 'vendor' | 'user',
+        role: selectedRole,
       };
 
-      // Add GST and Aadhar for vendor and company roles
+      // Add GST, PAN Card and Company Location for vendor and company roles
       if (selectedRole === 'vendor' || selectedRole === 'company') {
         signupData.gstNumber = gstNumber;
-        signupData.aadharNumber = aadharNumber;
+        signupData.panCard = panCard;
+        signupData.companyLocation = companyLocation;
       }
 
       const response = await signup(signupData);
 
       if (response.success && response.data.user) {
-        // Redirect based on user role
-        const dashboardPath = getDashboardPath(response.data.user.role);
-        navigate(dashboardPath);
+        // Check if user needs approval
+        if (response.data.user.approvalStatus === 'pending') {
+          // Show success message for pending approval
+          setError("");
+          // Store message to show on login page
+          localStorage.setItem('pendingApprovalMessage', response.message || 'Your account is pending approval. You can login once approved by admin.');
+          // Redirect to login page
+          navigate('/');
+        } else {
+          // Redirect based on user role for approved users
+          const dashboardPath = getDashboardPath(response.data.user.role);
+          navigate(dashboardPath);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed. Please try again.");
@@ -245,27 +258,45 @@ export default function SignupPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="aadharNumber" className="text-sm font-medium text-foreground">
-                        Aadhar Number
+                      <Label htmlFor="panCard" className="text-sm font-medium text-foreground">
+                        PAN Card Number
                       </Label>
                       <div className="relative">
                         <Input
-                          id="aadharNumber"
+                          id="panCard"
                           type="text"
-                          placeholder="Enter 12-digit Aadhar number"
+                          placeholder="Enter 12-character PAN Card number"
                           className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
-                          value={aadharNumber}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '');
-                            setAadharNumber(value);
-                          }}
+                          value={panCard}
+                          onChange={(e) => setPanCard(e.target.value.toUpperCase())}
                           required
                           disabled={isLoading}
                           maxLength={12}
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Enter 12 digits without spaces
+                        Enter 12-character PAN Card number
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="companyLocation" className="text-sm font-medium text-foreground">
+                        Company Location
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="companyLocation"
+                          type="text"
+                          placeholder="Enter company location (e.g., Mumbai)"
+                          className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
+                          value={companyLocation}
+                          onChange={(e) => setCompanyLocation(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Enter the city or location of your company
                       </p>
                     </div>
                   </>

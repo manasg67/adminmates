@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://admin-mates-backend.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://admin-mates-backend.vercel.app';
 
 export interface LoginRequest {
   email: string;
@@ -9,9 +9,10 @@ export interface SignupRequest {
     name: string;
     email: string;
     password: string;
-    role: 'admin' | 'vendor' | 'user';
+    role: 'admin' | 'vendor' | 'company';
     gstNumber?: string;
-    aadharNumber?: string;
+    panCard?: string;
+    companyLocation?: string;
   }
 export interface User {
   id: string;
@@ -150,7 +151,13 @@ export interface StatsResponse {
       approved: number;
       rejected: number;
     };
-    users: {
+    companies?: {
+      total: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+    };
+    users?: {
       total: number;
       pending: number;
       approved: number;
@@ -185,11 +192,19 @@ export interface VendorUser {
   role: string;
   gstNumber?: string;
   aadharNumber?: string;
+  panCard?: string;
+  companyLocation?: string;
   isApproved: boolean;
   approvalStatus: 'pending' | 'approved' | 'rejected';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  approvedAt?: string;
+  approvedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface VendorsResponse {
@@ -213,6 +228,23 @@ export interface UsersResponse {
   success: boolean;
   count: number;
   totalUsers: number;
+  totalPages: number;
+  currentPage: number;
+  data: VendorUser[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+export interface CompaniesResponse {
+  success: boolean;
+  count: number;
+  totalCompanies: number;
   totalPages: number;
   currentPage: number;
   data: VendorUser[];
@@ -277,6 +309,34 @@ export const getUsers = async (
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch users' }));
     throw new Error(error.message || 'Failed to fetch users');
+  }
+
+  return await response.json();
+};
+
+// Get companies with filters
+export const getCompanies = async (
+  status?: 'pending' | 'approved' | 'rejected',
+  page: number = 1,
+  limit: number = 10
+): Promise<CompaniesResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  
+  if (status) {
+    params.append('status', status);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/auth/companies?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch companies' }));
+    throw new Error(error.message || 'Failed to fetch companies');
   }
 
   return await response.json();
@@ -410,9 +470,9 @@ export const bulkReject = async (userIds: string[], reason?: string): Promise<{ 
   return await response.json();
 };
 
-// Create user (company)
-export const createUser = async (data: { name: string; email: string; gstNumber: string; aadharNumber: string }): Promise<{ success: boolean; message: string; data?: any }> => {
-  const response = await fetch(`${API_BASE_URL}/api/admin/create-user`, {
+// Create company (onboarding)
+export const createUser = async (data: { name: string; email: string; gstNumber: string; panCard: string; companyLocation: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/create-company`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -427,7 +487,7 @@ export const createUser = async (data: { name: string; email: string; gstNumber:
 };
 
 // Create vendor
-export const createVendor = async (data: { name: string; email: string; gstNumber: string; aadharNumber: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+export const createVendor = async (data: { name: string; email: string; gstNumber: string; panCard: string }): Promise<{ success: boolean; message: string; data?: any }> => {
   const response = await fetch(`${API_BASE_URL}/api/admin/create-vendor`, {
     method: 'POST',
     headers: getAuthHeaders(),

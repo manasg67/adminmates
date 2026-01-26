@@ -15,7 +15,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getStats, getVendors, getUsers, approveUser, rejectUser, formatRelativeTime, type VendorUser } from "@/lib/api"
+import { getStats, getVendors, getCompanies, approveUser, rejectUser, formatRelativeTime, type VendorUser } from "@/lib/api"
 
 interface Request {
   id: string
@@ -29,7 +29,7 @@ interface Request {
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     vendors: { total: 0, pending: 0, approved: 0, rejected: 0 },
-    users: { total: 0, pending: 0, approved: 0, rejected: 0 },
+    companies: { total: 0, pending: 0, approved: 0, rejected: 0 },
     admins: { total: 0 },
   })
   const [recentRequests, setRecentRequests] = useState<Request[]>([])
@@ -47,13 +47,19 @@ export default function AdminDashboard() {
         // Fetch stats
         const statsResponse = await getStats()
         if (statsResponse.success) {
-          setStats(statsResponse.data)
+          // Handle both 'companies' and 'users' field names for backward compatibility
+          const normalizedStats = {
+            vendors: statsResponse.data.vendors || { total: 0, pending: 0, approved: 0, rejected: 0 },
+            companies: statsResponse.data.companies || statsResponse.data.users || { total: 0, pending: 0, approved: 0, rejected: 0 },
+            admins: statsResponse.data.admins || { total: 0 },
+          }
+          setStats(normalizedStats)
         }
 
-        // Fetch pending vendors and users
-        const [vendorsResponse, usersResponse] = await Promise.all([
+        // Fetch pending vendors and companies
+        const [vendorsResponse, companiesResponse] = await Promise.all([
           getVendors('pending', 1, 10),
-          getUsers('pending', 1, 10),
+          getCompanies('pending', 1, 10),
         ])
 
         // Combine and format requests
@@ -73,16 +79,16 @@ export default function AdminDashboard() {
           })
         }
 
-        // Add users/companies
-        if (usersResponse.success && usersResponse.data) {
-          usersResponse.data.forEach((user: VendorUser) => {
+        // Add companies
+        if (companiesResponse.success && companiesResponse.data) {
+          companiesResponse.data.forEach((company: VendorUser) => {
             requests.push({
-              id: user._id,
-              name: user.name,
-              email: user.email,
+              id: company._id,
+              name: company.name,
+              email: company.email,
               type: "company",
-              status: user.approvalStatus,
-              date: formatRelativeTime(user.createdAt),
+              status: company.approvalStatus,
+              date: formatRelativeTime(company.createdAt),
             })
           })
         }
@@ -114,7 +120,12 @@ export default function AdminDashboard() {
       // Refresh stats
       const statsResponse = await getStats()
       if (statsResponse.success) {
-        setStats(statsResponse.data)
+        const normalizedStats = {
+          vendors: statsResponse.data.vendors || { total: 0, pending: 0, approved: 0, rejected: 0 },
+          companies: statsResponse.data.companies || statsResponse.data.users || { total: 0, pending: 0, approved: 0, rejected: 0 },
+          admins: statsResponse.data.admins || { total: 0 },
+        }
+        setStats(normalizedStats)
       }
     } catch (err) {
       console.error("Error approving request:", err)
@@ -143,7 +154,12 @@ export default function AdminDashboard() {
       // Refresh stats
       const statsResponse = await getStats()
       if (statsResponse.success) {
-        setStats(statsResponse.data)
+        const normalizedStats = {
+          vendors: statsResponse.data.vendors || { total: 0, pending: 0, approved: 0, rejected: 0 },
+          companies: statsResponse.data.companies || statsResponse.data.users || { total: 0, pending: 0, approved: 0, rejected: 0 },
+          admins: statsResponse.data.admins || { total: 0 },
+        }
+        setStats(normalizedStats)
       }
     } catch (err) {
       console.error("Error rejecting request:", err)
@@ -206,8 +222,8 @@ export default function AdminDashboard() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total Companies"
-            value={stats.users.total}
-            description={`${stats.users.approved} approved`}
+            value={stats.companies.total}
+            description={`${stats.companies.approved} approved`}
             icon={Building2}
             variant="primary"
             trend={{ value: 12, isPositive: true }}
@@ -229,7 +245,7 @@ export default function AdminDashboard() {
           />
           <StatsCard
             title="Pending Requests"
-            value={stats.users.pending + stats.vendors.pending}
+            value={stats.companies.pending + stats.vendors.pending}
             description="Awaiting review"
             icon={Clock}
             variant="warning"
@@ -257,21 +273,21 @@ export default function AdminDashboard() {
               <div className="rounded-lg bg-amber-50 p-4 text-center dark:bg-amber-500/10">
                 <Clock className="mx-auto h-5 w-5 text-amber-600 dark:text-amber-400" />
                 <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                  {stats.users.pending}
+                  {stats.companies.pending}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Pending</p>
               </div>
               <div className="rounded-lg bg-emerald-50 p-4 text-center dark:bg-emerald-500/10">
                 <CheckCircle className="mx-auto h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                  {stats.users.approved}
+                  {stats.companies.approved}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Approved</p>
               </div>
               <div className="rounded-lg bg-red-50 p-4 text-center dark:bg-red-500/10">
                 <XCircle className="mx-auto h-5 w-5 text-red-600 dark:text-red-400" />
                 <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                  {stats.users.rejected}
+                  {stats.companies.rejected}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Rejected</p>
               </div>

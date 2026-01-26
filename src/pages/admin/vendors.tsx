@@ -55,7 +55,7 @@ export default function VendorsPage() {
     name: "",
     email: "",
     gstNumber: "",
-    aadharNumber: "",
+    panCard: "",
   })
 
   // Calculate stats from vendors data
@@ -176,13 +176,13 @@ export default function VendorsPage() {
         name: newVendor.name,
         email: newVendor.email,
         gstNumber: newVendor.gstNumber,
-        aadharNumber: newVendor.aadharNumber,
+        panCard: newVendor.panCard,
       })
 
       if (response.success) {
         // Refresh the list and close dialog
         setCreateDialogOpen(false)
-        setNewVendor({ name: "", email: "", gstNumber: "", aadharNumber: "" })
+        setNewVendor({ name: "", email: "", gstNumber: "", panCard: "" })
         window.location.reload()
       }
     } catch (error) {
@@ -383,15 +383,15 @@ export default function VendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="aadharNumber" className="text-sm font-medium">
-                  Aadhar Number
+                <Label htmlFor="panCard" className="text-sm font-medium">
+                  PAN Card Number
                 </Label>
                 <Input
-                  id="aadharNumber"
-                  placeholder="Enter Aadhar number"
-                  value={newVendor.aadharNumber}
+                  id="panCard"
+                  placeholder="Enter PAN Card number"
+                  value={newVendor.panCard}
                   onChange={(e) =>
-                    setNewVendor((prev) => ({ ...prev, aadharNumber: e.target.value }))
+                    setNewVendor((prev) => ({ ...prev, panCard: e.target.value }))
                   }
                   className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
                 />
@@ -411,7 +411,7 @@ export default function VendorsPage() {
                   !newVendor.name.trim() ||
                   !newVendor.email.trim() ||
                   !newVendor.gstNumber.trim() ||
-                  !newVendor.aadharNumber.trim() ||
+                  !newVendor.panCard.trim() ||
                   isCreating
                 }
                 className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"
