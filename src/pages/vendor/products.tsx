@@ -6,7 +6,6 @@ import {
   Package,
   Plus,
   Search,
-  Filter,
   RefreshCw,
   AlertCircle,
   Loader2,
