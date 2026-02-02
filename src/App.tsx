@@ -37,6 +37,7 @@ function App() {
           <Route path="/companies/dashboard" element={<CompaniesDashboard />} />
           <Route path="/admin/sub-admins" element={<SubAdminsPage />} />  
 
+
           {/* Products page (can be accessed by any user type) */}
           <Route path="/products" element={<ProductListingPage />} />
         </Routes>
