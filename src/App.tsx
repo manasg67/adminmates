@@ -3,7 +3,6 @@ import './App.css'
 import HomePage from './pages/home'
 import LoginPage from './pages/login'
 import SignupPage from './pages/signup'
-import ProductListingPage from './pages/products'
 
 // Dashboard pages
 import AdminDashboard from './pages/admin/dashboard'
@@ -36,10 +35,6 @@ function App() {
           <Route path="/vendor/add-product" element={<AddProductPage />} />
           <Route path="/companies/dashboard" element={<CompaniesDashboard />} />
           <Route path="/admin/sub-admins" element={<SubAdminsPage />} />  
-
-
-          {/* Products page (can be accessed by any user type) */}
-          <Route path="/products" element={<ProductListingPage />} />
         </Routes>
       </BrowserRouter>
     </>

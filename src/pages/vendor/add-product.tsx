@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   ImagePlus,
 } from "lucide-react"
-import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { VendorLayout } from "@/components/vendor/vendor-layout"
 import { createProduct } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
@@ -134,9 +134,8 @@ export default function AddProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Header />
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
+    <VendorLayout>
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Button
@@ -520,7 +519,7 @@ export default function AddProductPage() {
             </Button>
           </div>
         </form>
-      </main>
-    </div>
+      </div>
+    </VendorLayout>
   )
 }

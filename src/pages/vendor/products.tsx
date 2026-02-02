@@ -16,7 +16,6 @@ import {
   Trash2,
   MoreHorizontal,
 } from "lucide-react"
-import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { VendorLayout } from "@/components/vendor/vendor-layout"
 import { getProducts, type Product } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
@@ -116,9 +116,8 @@ export default function VendorProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Header />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <VendorLayout>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -453,7 +452,7 @@ export default function VendorProductsPage() {
             )}
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </VendorLayout>
   )
 }
