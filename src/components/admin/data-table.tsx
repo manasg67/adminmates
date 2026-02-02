@@ -39,6 +39,9 @@ export interface DataItem {
   email: string
   role: string
   gstNumber?: string
+  panCard?: string
+  companyLocation?: string
+  vendorLocation?: string
   aadharNumber?: string
   isApproved: boolean
   approvalStatus: "pending" | "approved" | "rejected"
@@ -217,6 +220,12 @@ export function DataTable({ data, type, onApprove, onReject }: DataTableProps) {
                   GST Number
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  PAN Number
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Location
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -286,6 +295,19 @@ export function DataTable({ data, type, onApprove, onReject }: DataTableProps) {
                       <code className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         {item.gstNumber || "N/A"}
                       </code>
+                    </td>
+                    <td className="px-4 py-4">
+                      <code className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        {item.panCard || "N/A"}
+                      </code>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        {type === "vendor" 
+                          ? (item.vendorLocation || "N/A")
+                          : (item.companyLocation || "N/A")
+                        }
+                      </span>
                     </td>
                     <td className="px-4 py-4">{getStatusBadge(item.approvalStatus)}</td>
                     <td className="px-4 py-4">

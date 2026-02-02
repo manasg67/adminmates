@@ -1,29 +1,47 @@
-import { Building2, Package, TrendingUp, DollarSign } from "lucide-react"
+import { Building2, Package, TrendingUp, DollarSign, Plus } from "lucide-react"
 import { Header } from "@/components/header"
+import { Button } from "@/components/ui/button"
+import { useNavigate } from "react-router-dom"
 
 export default function VendorDashboard() {
+  const navigate = useNavigate()
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Building2 className="h-8 w-8 text-accent" />
-            <h1 className="text-3xl font-bold text-foreground">Vendor Dashboard</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-8 w-8 text-accent" />
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Vendor Dashboard</h1>
+                <p className="text-muted-foreground">Manage your products and sales</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate("/vendor/add-product")}
+              className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:from-violet-600 hover:to-purple-700"
+            >
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
           </div>
-          <p className="text-muted-foreground">Manage your products and sales</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card rounded-xl p-6 border border-border">
+          <button
+            onClick={() => navigate("/vendor/products")}
+            className="bg-card rounded-xl p-6 border border-border hover:shadow-lg hover:border-primary transition-all cursor-pointer group"
+          >
             <div className="flex items-center justify-between">
-              <div>
+              <div className="text-left">
                 <p className="text-sm text-muted-foreground mb-1">Total Products</p>
                 <p className="text-2xl font-bold text-foreground">124</p>
               </div>
-              <Package className="h-10 w-10 text-primary" />
+              <Package className="h-10 w-10 text-primary group-hover:scale-110 transition-transform" />
             </div>
-          </div>
+          </button>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between">
               <div>

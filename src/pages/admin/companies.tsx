@@ -210,14 +210,6 @@ export default function CompaniesPage() {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 rounded-lg border-slate-200 dark:border-slate-700 bg-transparent"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-              <Button
                 size="sm"
                 onClick={() => setCreateDialogOpen(true)}
                 className="gap-2 rounded-lg bg-linear-to-r from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-500/25 hover:from-blue-600 hover:to-cyan-700"

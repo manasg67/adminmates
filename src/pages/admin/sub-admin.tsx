@@ -278,14 +278,6 @@ export default function SubAdminsPage() {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 rounded-lg border-slate-200 dark:border-slate-700 bg-transparent"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-              <Button
                 size="sm"
                 onClick={() => setCreateDialogOpen(true)}
                 className="gap-2 rounded-lg bg-linear-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-600 hover:to-blue-700"

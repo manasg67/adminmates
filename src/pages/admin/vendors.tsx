@@ -208,14 +208,6 @@ export default function VendorsPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 rounded-lg border-slate-200 dark:border-slate-700 bg-transparent"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-            <Button
               size="sm"
               onClick={() => setCreateDialogOpen(true)}
               className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:from-violet-600 hover:to-purple-700"
@@ -382,6 +374,20 @@ export default function VendorsPage() {
                   className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="panCard" className="text-sm font-medium">
+                  PAN Card Number
+                </Label>
+                <Input
+                  id="panCard"
+                  placeholder="Enter PAN Card number"
+                  value={newVendor.panCard}
+                  onChange={(e) =>
+                    setNewVendor((prev) => ({ ...prev, panCard: e.target.value }))
+                  }
+                  className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
+                />
+              </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
@@ -397,6 +403,7 @@ export default function VendorsPage() {
                   !newVendor.name.trim() ||
                   !newVendor.email.trim() ||
                   !newVendor.gstNumber.trim() ||
+                  !newVendor.panCard.trim() ||
                   isCreating
                 }
                 className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"

@@ -20,6 +20,7 @@ export default function SignupPage() {
   const [gstNumber, setGstNumber] = useState("");
   const [panCard, setPanCard] = useState("");
   const [companyLocation, setCompanyLocation] = useState("");
+  const [seCertificate, setSeCertificate] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,12 +49,16 @@ export default function SignupPage() {
         setError("Please enter a valid 15-character GST number");
         return;
       }
-      if (!panCard || panCard.length !== 12) {
-        setError("Please enter a valid 12-character PAN Card number");
+      if (!panCard || panCard.length !== 10) {
+        setError("Please enter a valid 10-character PAN Card number");
         return;
       }
       if (!companyLocation || companyLocation.trim() === '') {
-        setError("Please enter company location");
+        setError(`Please enter ${selectedRole === 'vendor' ? 'vendor' : 'company'} location`);
+        return;
+      }
+      if (!seCertificate) {
+        setError("Please upload SE Certificate");
         return;
       }
     }
@@ -61,21 +66,31 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const signupData: any = {
-        name,
-        email,
-        password,
-        role: selectedRole,
-      };
+      // Use FormData for file upload
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('role', selectedRole);
 
-      // Add GST, PAN Card and Company Location for vendor and company roles
-      if (selectedRole === 'vendor' || selectedRole === 'company') {
-        signupData.gstNumber = gstNumber;
-        signupData.panCard = panCard;
-        signupData.companyLocation = companyLocation;
+      // Add GST, PAN Card, Location and Certificate for vendor and company roles
+      if (selectedRole === 'vendor') {
+        formData.append('gstNumber', gstNumber);
+        formData.append('panCard', panCard);
+        formData.append('vendorLocation', companyLocation);
+        if (seCertificate) {
+          formData.append('seCertificate', seCertificate);
+        }
+      } else if (selectedRole === 'company') {
+        formData.append('gstNumber', gstNumber);
+        formData.append('panCard', panCard);
+        formData.append('companyLocation', companyLocation);
+        if (seCertificate) {
+          formData.append('seCertificate', seCertificate);
+        }
       }
 
-      const response = await signup(signupData);
+      const response = await signup(formData);
 
       if (response.success && response.data.user) {
         // Check if user needs approval
@@ -265,29 +280,29 @@ export default function SignupPage() {
                         <Input
                           id="panCard"
                           type="text"
-                          placeholder="Enter 12-character PAN Card number"
+                          placeholder="Enter 10-character PAN Card number"
                           className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
                           value={panCard}
                           onChange={(e) => setPanCard(e.target.value.toUpperCase())}
                           required
                           disabled={isLoading}
-                          maxLength={12}
+                          maxLength={10}
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Enter 12-character PAN Card number
+                        Enter 10-character PAN Card number (e.g., ABCDE1234F)
                       </p>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="companyLocation" className="text-sm font-medium text-foreground">
-                        Company Location
+                        {selectedRole === 'vendor' ? 'Vendor Location' : 'Company Location'}
                       </Label>
                       <div className="relative">
                         <Input
                           id="companyLocation"
                           type="text"
-                          placeholder="Enter company location (e.g., Mumbai)"
+                          placeholder={selectedRole === 'vendor' ? 'Enter vendor location (e.g., Mumbai)' : 'Enter company location (e.g., Mumbai)'}
                           className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
                           value={companyLocation}
                           onChange={(e) => setCompanyLocation(e.target.value)}
@@ -296,8 +311,38 @@ export default function SignupPage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Enter the city or location of your company
+                        {selectedRole === 'vendor' ? 'Enter the city or location of your vendor business' : 'Enter the city or location of your company'}
                       </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="seCertificate" className="text-sm font-medium text-foreground">
+                        SE Certificate *
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="seCertificate"
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSeCertificate(file);
+                            }
+                          }}
+                          required
+                          disabled={isLoading}
+                          className="h-11 bg-input border-border focus:ring-2 focus:ring-ring cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Upload SE Certificate (PDF, JPG, PNG - Max 5MB)
+                      </p>
+                      {seCertificate && (
+                        <p className="text-xs text-green-600 dark:text-green-400">
+                          ✓ {seCertificate.name} selected
+                        </p>
+                      )}
                     </div>
                   </>
                 )}

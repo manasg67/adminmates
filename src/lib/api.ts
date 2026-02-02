@@ -89,14 +89,17 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
   return data;
 };
 
-// Signup API
-export const signup = async (userData: SignupRequest): Promise<AuthResponse> => {
+// Signup API - now accepts FormData for file upload
+export const signup = async (userData: SignupRequest | FormData): Promise<AuthResponse> => {
+  // Check if userData is FormData (has file upload)
+  const isFormData = userData instanceof FormData;
+  
   const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
     method: 'POST',
-    headers: {
+    headers: isFormData ? {} : {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(userData),
+    body: isFormData ? userData : JSON.stringify(userData),
   });
 
   if (!response.ok) {
@@ -582,4 +585,183 @@ export const formatRelativeTime = (dateString: string): string => {
   } else {
     return date.toLocaleDateString();
   }
+};
+
+// Product interfaces
+export interface ProductData {
+  sku: string;
+  brand: string;
+  productName: string;
+  description: string;
+  price: number;
+  weight: {
+    value: number;
+    unit: string;
+  };
+  dimensions: {
+    length: number;
+    width: number;
+    height: number;
+    unit: string;
+  };
+  color: string;
+  material: string;
+  packSize: string;
+  uom: string;
+  gstSlab: number;
+  categories: string;
+  images: File[];
+}
+
+export interface ProductResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
+// Create product
+export const createProduct = async (productData: ProductData): Promise<ProductResponse> => {
+  const token = getAuthToken();
+  
+  const formData = new FormData();
+  formData.append('sku', productData.sku);
+  formData.append('brand', productData.brand);
+  formData.append('productName', productData.productName);
+  formData.append('description', productData.description);
+  formData.append('price', productData.price.toString());
+  formData.append('weight', JSON.stringify(productData.weight));
+  formData.append('dimensions', JSON.stringify(productData.dimensions));
+  formData.append('color', productData.color);
+  formData.append('material', productData.material);
+  formData.append('packSize', productData.packSize);
+  formData.append('uom', productData.uom);
+  formData.append('gstSlab', productData.gstSlab.toString());
+  formData.append('categories', productData.categories);
+  
+  // Append images
+  productData.images.forEach((image) => {
+    formData.append('images', image);
+  });
+
+  const response = await fetch(`${API_BASE_URL}/api/products`, {
+    method: 'POST',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create product' }));
+    throw new Error(error.message || 'Failed to create product');
+  }
+
+  return await response.json();
+};
+
+// Product interfaces for listing
+export interface VendorInfo {
+  _id: string;
+  name: string;
+  email: string;
+  gstNumber: string;
+  vendorLocation?: string;
+  companyLocation?: string;
+}
+
+export interface ProductImage {
+  url: string;
+  publicId: string;
+  _id: string;
+}
+
+export interface Product {
+  _id: string;
+  vendor: VendorInfo;
+  sku: string;
+  brand: string;
+  productName: string;
+  description: string;
+  price: number;
+  weight: {
+    value: number;
+    unit: string;
+  };
+  dimensions: {
+    length: number;
+    width: number;
+    height: number;
+    unit: string;
+  };
+  color: string;
+  material: string;
+  packSize: string;
+  uom: string;
+  gstSlab: number;
+  images: ProductImage[];
+  categories: string[];
+  status: string;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductsResponse {
+  success: boolean;
+  count: number;
+  totalProducts: number;
+  totalPages: number;
+  currentPage: number;
+  data: Product[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+// Get products with filters
+export const getProducts = async (
+  filters?: {
+    status?: string;
+    approvalStatus?: string;
+    category?: string;
+    brand?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    search?: string;
+  },
+  page: number = 1,
+  limit: number = 10
+): Promise<ProductsResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.approvalStatus) params.append('approvalStatus', filters.approvalStatus);
+  if (filters?.category) params.append('category', filters.category);
+  if (filters?.brand) params.append('brand', filters.brand);
+  if (filters?.minPrice) params.append('minPrice', filters.minPrice.toString());
+  if (filters?.maxPrice) params.append('maxPrice', filters.maxPrice.toString());
+  if (filters?.search) params.append('search', filters.search);
+
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch products' }));
+    throw new Error(error.message || 'Failed to fetch products');
+  }
+
+  return await response.json();
 };
