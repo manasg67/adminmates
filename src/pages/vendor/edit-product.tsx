@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   Package,
@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   ImagePlus,
   AlertCircle,
+  Plus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,8 +23,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { VendorLayout } from "@/components/vendor/vendor-layout"
-import { updateProduct, getProductById, type ProductImage } from "@/lib/api"
+import type { Category, SubCategory, ProductImage } from "@/lib/api"
+import {
+  createCategory,
+  createSubCategory,
+  getCategories,
+  getProductById,
+  getSubCategories,
+  updateProduct,
+} from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 export default function EditProductPage() {
@@ -35,6 +52,16 @@ export default function EditProductPage() {
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [existingImages, setExistingImages] = useState<ProductImage[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+  const [isLoadingSubCategories, setIsLoadingSubCategories] = useState(false)
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
+  const [isSubCategoryDialogOpen, setIsSubCategoryDialogOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [newSubCategoryName, setNewSubCategoryName] = useState("")
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false)
+  const [isCreatingSubCategory, setIsCreatingSubCategory] = useState(false)
 
   const [formData, setFormData] = useState({
     sku: "",
@@ -53,8 +80,47 @@ export default function EditProductPage() {
     packSize: "",
     uom: "piece",
     gstSlab: "12",
-    categories: "",
+    hsnCode: "",
+    categoryId: "",
+    subCategoryId: "",
   })
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      setIsLoadingCategories(true)
+      try {
+        const response = await getCategories(1, 100)
+        setCategories(response.data || [])
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+
+    loadCategories()
+  }, [])
+
+  useEffect(() => {
+    const loadSubCategories = async () => {
+      if (!formData.categoryId) {
+        setSubCategories([])
+        return
+      }
+
+      setIsLoadingSubCategories(true)
+      try {
+        const response = await getSubCategories(formData.categoryId, 1, 100)
+        setSubCategories(response.data || [])
+      } catch (error) {
+        console.error("Error fetching subcategories:", error)
+      } finally {
+        setIsLoadingSubCategories(false)
+      }
+    }
+
+    loadSubCategories()
+  }, [formData.categoryId])
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -87,7 +153,9 @@ export default function EditProductPage() {
             packSize: product.packSize || "",
             uom: product.uom || "piece",
             gstSlab: product.gstSlab?.toString() || "12",
-            categories: product.categories?.join(", ") || "",
+            hsnCode: product.hsnCode || "",
+            categoryId: product.category?._id || "",
+            subCategoryId: product.subCategory?._id || "",
           })
           setExistingImages(product.images || [])
         }
@@ -111,6 +179,10 @@ export default function EditProductPage() {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleCategoryChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, categoryId: value, subCategoryId: "" }))
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,7 +238,9 @@ export default function EditProductPage() {
         packSize: formData.packSize,
         uom: formData.uom,
         gstSlab: parseInt(formData.gstSlab),
-        categories: formData.categories,
+        hsnCode: formData.hsnCode,
+        categoryId: formData.categoryId,
+        subCategoryId: formData.subCategoryId,
         images: selectedImages,
       }
 
@@ -497,16 +571,83 @@ export default function EditProductPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="categories">Categories</Label>
+                <Label htmlFor="hsnCode">HSN Code</Label>
                 <Input
-                  id="categories"
-                  name="categories"
-                  placeholder="e.g., notebooks"
-                  value={formData.categories}
+                  id="hsnCode"
+                  name="hsnCode"
+                  placeholder="e.g., 9876857647"
+                  value={formData.hsnCode}
                   onChange={handleInputChange}
                   required
                   className="rounded-lg"
                 />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="categoryId">Category</Label>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8 rounded-lg"
+                    onClick={() => setIsCategoryDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Select
+                  value={formData.categoryId}
+                  onValueChange={handleCategoryChange}
+                  key={`category-${formData.categoryId}`}
+                >
+                  <SelectTrigger className="rounded-lg">
+                    <SelectValue placeholder={isLoadingCategories ? "Loading categories..." : "Select category"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category._id} value={category._id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="subCategoryId">Sub Category</Label>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8 rounded-lg"
+                    onClick={() => {
+                      if (!formData.categoryId) {
+                        alert("Please select a category first")
+                        return
+                      }
+                      setIsSubCategoryDialogOpen(true)
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Select
+                  value={formData.subCategoryId}
+                  onValueChange={(value) => handleSelectChange("subCategoryId", value)}
+                  disabled={!formData.categoryId}
+                  key={`subcategory-${formData.subCategoryId}`}
+                >
+                  <SelectTrigger className="rounded-lg">
+                    <SelectValue placeholder={isLoadingSubCategories ? "Loading subcategories..." : "Select sub category"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subCategories.map((subCategory) => (
+                      <SelectItem key={subCategory._id} value={subCategory._id}>
+                        {subCategory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -637,6 +778,129 @@ export default function EditProductPage() {
           </div>
         </form>
       </div>
+
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Create Category</DialogTitle>
+            <DialogDescription>Add a new category for products.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="newCategoryName">Category Name</Label>
+            <Input
+              id="newCategoryName"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="e.g., Stationary"
+              className="rounded-lg"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCategoryDialogOpen(false)}
+              className="rounded-lg"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isCreatingCategory || !newCategoryName.trim()}
+              onClick={async () => {
+                setIsCreatingCategory(true)
+                try {
+                  const response = await createCategory(newCategoryName.trim())
+                  if (response.success) {
+                    const updated = await getCategories(1, 100)
+                    setCategories(updated.data || [])
+                    if (response.data?._id) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        categoryId: response.data?._id || prev.categoryId,
+                        subCategoryId: "",
+                      }))
+                    }
+                    setNewCategoryName("")
+                    setIsCategoryDialogOpen(false)
+                  }
+                } catch (error) {
+                  console.error("Error creating category:", error)
+                  alert(error instanceof Error ? error.message : "Failed to create category")
+                } finally {
+                  setIsCreatingCategory(false)
+                }
+              }}
+              className="rounded-lg"
+            >
+              {isCreatingCategory ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSubCategoryDialogOpen} onOpenChange={setIsSubCategoryDialogOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Create Sub Category</DialogTitle>
+            <DialogDescription>Add a new sub category for the selected category.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="newSubCategoryName">Sub Category Name</Label>
+            <Input
+              id="newSubCategoryName"
+              value={newSubCategoryName}
+              onChange={(e) => setNewSubCategoryName(e.target.value)}
+              placeholder="e.g., Pencil"
+              className="rounded-lg"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsSubCategoryDialogOpen(false)}
+              className="rounded-lg"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isCreatingSubCategory || !newSubCategoryName.trim() || !formData.categoryId}
+              onClick={async () => {
+                if (!formData.categoryId) return
+                setIsCreatingSubCategory(true)
+                try {
+                  const response = await createSubCategory(
+                    newSubCategoryName.trim(),
+                    formData.categoryId
+                  )
+                  if (response.success) {
+                    const updated = await getSubCategories(formData.categoryId, 1, 100)
+                    setSubCategories(updated.data || [])
+                    if (response.data?._id) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        subCategoryId: response.data?._id || prev.subCategoryId,
+                      }))
+                    }
+                    setNewSubCategoryName("")
+                    setIsSubCategoryDialogOpen(false)
+                  }
+                } catch (error) {
+                  console.error("Error creating subcategory:", error)
+                  alert(error instanceof Error ? error.message : "Failed to create subcategory")
+                } finally {
+                  setIsCreatingSubCategory(false)
+                }
+              }}
+              className="rounded-lg"
+            >
+              {isCreatingSubCategory ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </VendorLayout>
   )
 }

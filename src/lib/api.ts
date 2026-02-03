@@ -626,6 +626,74 @@ export const formatRelativeTime = (dateString: string): string => {
   }
 };
 
+// Category interfaces
+export interface Category {
+  _id: string;
+  name: string;
+  isActive: string;
+  createdBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface CategoriesResponse {
+  success: boolean;
+  count: number;
+  totalCategories: number;
+  totalPages: number;
+  currentPage: number;
+  data: Category[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+// SubCategory interfaces
+export interface SubCategory {
+  _id: string;
+  name: string;
+  category: {
+    _id: string;
+    name: string;
+  };
+  isActive: string;
+  createdBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface SubCategoriesResponse {
+  success: boolean;
+  count: number;
+  totalSubCategories: number;
+  totalPages: number;
+  currentPage: number;
+  data: SubCategory[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
 // Product interfaces
 export interface ProductData {
   sku: string;
@@ -648,7 +716,9 @@ export interface ProductData {
   packSize: string;
   uom: string;
   gstSlab: number;
-  categories: string;
+  hsnCode: string;
+  categoryId: string;
+  subCategoryId: string;
   images: File[];
 }
 
@@ -657,6 +727,92 @@ export interface ProductResponse {
   message: string;
   data?: any;
 }
+
+// Create category (admin only)
+export const createCategory = async (name: string): Promise<{ success: boolean; message: string; data?: Category }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/categories`, {
+    method: 'POST',
+    headers: getAuthHeaders('admin'),
+    body: JSON.stringify({ name }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create category' }));
+    throw new Error(error.message || 'Failed to create category');
+  }
+
+  return await response.json();
+};
+
+// Get all categories (any user role)
+export const getCategories = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<CategoriesResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/categories?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch categories' }));
+    throw new Error(error.message || 'Failed to fetch categories');
+  }
+
+  return await response.json();
+};
+
+// Create subcategory (admin only)
+export const createSubCategory = async (
+  name: string,
+  categoryId: string
+): Promise<{ success: boolean; message: string; data?: SubCategory }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/sub-categories`, {
+    method: 'POST',
+    headers: getAuthHeaders('admin'),
+    body: JSON.stringify({ name, categoryId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create subcategory' }));
+    throw new Error(error.message || 'Failed to create subcategory');
+  }
+
+  return await response.json();
+};
+
+// Get all subcategories (any user role)
+export const getSubCategories = async (
+  categoryId?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<SubCategoriesResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (categoryId) {
+    params.append('categoryId', categoryId);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/sub-categories?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch subcategories' }));
+    throw new Error(error.message || 'Failed to fetch subcategories');
+  }
+
+  return await response.json();
+};
 
 // Create product
 export const createProduct = async (productData: ProductData): Promise<ProductResponse> => {
@@ -675,7 +831,9 @@ export const createProduct = async (productData: ProductData): Promise<ProductRe
   formData.append('packSize', productData.packSize);
   formData.append('uom', productData.uom);
   formData.append('gstSlab', productData.gstSlab.toString());
-  formData.append('categories', productData.categories);
+  formData.append('hsnCode', productData.hsnCode);
+  formData.append('categoryId', productData.categoryId);
+  formData.append('subCategoryId', productData.subCategoryId);
   
   // Append images
   productData.images.forEach((image) => {
@@ -737,8 +895,19 @@ export interface Product {
   packSize: string;
   uom: string;
   gstSlab: number;
+  hsnCode: string;
   images: ProductImage[];
-  categories: string[];
+  category: {
+    _id: string;
+    name: string;
+  };
+  subCategory: {
+    _id: string;
+    name: string;
+  };
+  categoryId?: string;
+  subCategoryId?: string;
+  categories?: string[];
   status: string;
   approvalStatus: 'pending' | 'approved' | 'rejected';
   createdAt: string;
@@ -774,7 +943,8 @@ export const getProducts = async (
     search?: string;
   },
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  role?: 'vendor' | 'admin'
 ): Promise<ProductsResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -789,7 +959,7 @@ export const getProducts = async (
   if (filters?.maxPrice) params.append('maxPrice', filters.maxPrice.toString());
   if (filters?.search) params.append('search', filters.search);
 
-  const token = getAuthToken('vendor');
+  const token = role ? getAuthToken(role) : getAuthToken('vendor');
   const response = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`, {
     method: 'GET',
     headers: {
@@ -841,7 +1011,9 @@ export const updateProduct = async (productId: string, productData: Partial<Prod
   if (productData.packSize) formData.append('packSize', productData.packSize);
   if (productData.uom) formData.append('uom', productData.uom);
   if (productData.gstSlab) formData.append('gstSlab', productData.gstSlab.toString());
-  if (productData.categories) formData.append('categories', productData.categories);
+  if (productData.hsnCode) formData.append('hsnCode', productData.hsnCode);
+  if (productData.categoryId) formData.append('categoryId', productData.categoryId);
+  if (productData.subCategoryId) formData.append('subCategoryId', productData.subCategoryId);
   
   // Append images only if they are new files (not URLs)
   if (productData.images && Array.isArray(productData.images)) {
@@ -907,6 +1079,47 @@ export const toggleProductStatus = async (productId: string): Promise<{
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to toggle product status' }));
     throw new Error(error.message || 'Failed to toggle product status');
+  }
+
+  return await response.json();
+};
+
+// Approve Product (Admin only)
+export const approveProduct = async (productId: string): Promise<{ success: boolean; message: string; data?: any }> => {
+  const token = getAuthToken('admin');
+
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}/approve`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to approve product' }));
+    throw new Error(error.message || 'Failed to approve product');
+  }
+
+  return await response.json();
+};
+
+// Reject Product (Admin only)
+export const rejectProduct = async (productId: string, reason: string): Promise<{ success: boolean; message: string; data?: any }> => {
+  const token = getAuthToken('admin');
+
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}/reject`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+    body: JSON.stringify({ reason }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to reject product' }));
+    throw new Error(error.message || 'Failed to reject product');
   }
 
   return await response.json();

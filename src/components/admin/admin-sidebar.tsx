@@ -12,6 +12,7 @@ import {
   LogOut,
   Clock,
   HelpCircle,
+  Package,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -120,11 +121,17 @@ export function AdminSidebar({
       icon: Users,
       badge: pendingVendorsCount > 0 ? pendingVendorsCount.toString() : undefined,
     },
+    {
+      title: "Product Approval",
+      href: "/admin/product-approval",
+      icon: Package,
+    },
     ...(isAdmin ? [{
       title: "Add Sub-Admin",
       href: "/admin/sub-admins",
       icon: Users,
     }] : []),
+
   ]
 
   return (
