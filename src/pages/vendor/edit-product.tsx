@@ -43,6 +43,7 @@ import {
 } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
+
 export default function EditProductPage() {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
