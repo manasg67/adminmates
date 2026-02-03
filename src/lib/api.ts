@@ -32,19 +32,55 @@ export interface AuthResponse {
   };
 }
 
-// Store token in localStorage
-export const setAuthToken = (token: string) => {
-  localStorage.setItem('authToken', token);
+type UserRole = 'admin' | 'vendor' | 'company';
+
+const TOKEN_KEYS: Record<UserRole, string> = {
+  admin: 'adminToken',
+  vendor: 'vendorToken',
+  company: 'companyToken',
 };
 
-// Get token from localStorage
-export const getAuthToken = (): string | null => {
-  return localStorage.getItem('authToken');
+const normalizeRole = (role?: string): UserRole | null => {
+  if (!role) return null;
+  const normalized = role.toLowerCase();
+  if (normalized === 'admin') return 'admin';
+  if (normalized === 'vendor') return 'vendor';
+  if (normalized === 'company') return 'company';
+  return null;
+};
+
+// Store token in localStorage by role
+export const setAuthToken = (token: string, role: UserRole) => {
+  localStorage.setItem(TOKEN_KEYS[role], token);
+};
+
+// Get token from localStorage by role
+export const getAuthToken = (role?: UserRole): string | null => {
+  if (role) {
+    return localStorage.getItem(TOKEN_KEYS[role]);
+  }
+
+  return (
+    localStorage.getItem('vendorToken') ||
+    localStorage.getItem('adminToken') ||
+    localStorage.getItem('companyToken') ||
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token')
+  );
 };
 
 // Remove token from localStorage
-export const removeAuthToken = () => {
+export const removeAuthToken = (role?: UserRole) => {
+  if (role) {
+    localStorage.removeItem(TOKEN_KEYS[role]);
+    return;
+  }
+
+  localStorage.removeItem('vendorToken');
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('companyToken');
   localStorage.removeItem('authToken');
+  localStorage.removeItem('token');
 };
 
 // Store user data in localStorage
@@ -82,7 +118,8 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
   
   // Store token and user data
   if (data.success && data.data.token) {
-    setAuthToken(data.data.token);
+    const role = normalizeRole(data.data.user.role) || 'vendor';
+    setAuthToken(data.data.token, role);
     setUserData(data.data.user);
   }
 
@@ -111,7 +148,8 @@ export const signup = async (userData: SignupRequest | FormData): Promise<AuthRe
   
   // Store token and user data
   if (data.success && data.data.token) {
-    setAuthToken(data.data.token);
+    const role = normalizeRole(data.data.user.role) || 'vendor';
+    setAuthToken(data.data.token, role);
     setUserData(data.data.user);
   }
 
@@ -136,8 +174,9 @@ export const getDashboardPath = (role: string): string => {
 };
 
 // Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = getAuthToken();
+const getAuthHeaders = (role?: UserRole) => {
+  const resolvedRole = role || normalizeRole(getUserData()?.role) || undefined;
+  const token = resolvedRole ? getAuthToken(resolvedRole) : getAuthToken();
   return {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -176,7 +215,7 @@ export interface StatsResponse {
 export const getStats = async (): Promise<StatsResponse> => {
   const response = await fetch(`${API_BASE_URL}/api/auth/stats`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -278,7 +317,7 @@ export const getVendors = async (
 
   const response = await fetch(`${API_BASE_URL}/api/auth/vendors?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -306,7 +345,7 @@ export const getUsers = async (
 
   const response = await fetch(`${API_BASE_URL}/api/auth/users?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -334,7 +373,7 @@ export const getCompanies = async (
 
   const response = await fetch(`${API_BASE_URL}/api/auth/companies?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -396,7 +435,7 @@ export const getSubAdmins = async (
 
   const response = await fetch(`${API_BASE_URL}/api/admin/sub-admins?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -411,7 +450,7 @@ export const getSubAdmins = async (
 export const approveUser = async (id: string): Promise<{ success: boolean; message: string }> => {
   const response = await fetch(`${API_BASE_URL}/api/auth/approve/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -426,7 +465,7 @@ export const approveUser = async (id: string): Promise<{ success: boolean; messa
 export const rejectUser = async (id: string, reason?: string): Promise<{ success: boolean; message: string }> => {
   const response = await fetch(`${API_BASE_URL}/api/auth/reject/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify({ reason: reason || 'Rejected by admin' }),
   });
 
@@ -442,7 +481,7 @@ export const rejectUser = async (id: string, reason?: string): Promise<{ success
 export const bulkApprove = async (userIds: string[]): Promise<{ success: boolean; message: string }> => {
   const response = await fetch(`${API_BASE_URL}/api/auth/bulk-approve`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify({ userIds }),
   });
 
@@ -458,7 +497,7 @@ export const bulkApprove = async (userIds: string[]): Promise<{ success: boolean
 export const bulkReject = async (userIds: string[], reason?: string): Promise<{ success: boolean; message: string }> => {
   const response = await fetch(`${API_BASE_URL}/api/auth/bulk-reject`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify({ 
       userIds,
       reason: reason || 'Rejected by admin'
@@ -477,7 +516,7 @@ export const bulkReject = async (userIds: string[], reason?: string): Promise<{ 
 export const createUser = async (data: { name: string; email: string; gstNumber: string; panCard: string; companyLocation: string }): Promise<{ success: boolean; message: string; data?: any }> => {
   const response = await fetch(`${API_BASE_URL}/api/admin/create-company`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify(data),
   });
 
@@ -493,7 +532,7 @@ export const createUser = async (data: { name: string; email: string; gstNumber:
 export const createVendor = async (data: { name: string; email: string; gstNumber: string; panCard: string }): Promise<{ success: boolean; message: string; data?: any }> => {
   const response = await fetch(`${API_BASE_URL}/api/admin/create-vendor`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify(data),
   });
 
@@ -509,7 +548,7 @@ export const createVendor = async (data: { name: string; email: string; gstNumbe
 export const createSubAdmin = async (data: { name: string; email: string }): Promise<{ success: boolean; message: string; data?: SubAdmin }> => {
   const response = await fetch(`${API_BASE_URL}/api/admin/create-sub-admin`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify(data),
   });
 
@@ -525,7 +564,7 @@ export const createSubAdmin = async (data: { name: string; email: string }): Pro
 export const toggleSubAdminStatus = async (id: string): Promise<{ success: boolean; message: string }> => {
   const response = await fetch(`${API_BASE_URL}/api/admin/toggle-status/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -621,7 +660,7 @@ export interface ProductResponse {
 
 // Create product
 export const createProduct = async (productData: ProductData): Promise<ProductResponse> => {
-  const token = getAuthToken();
+  const token = getAuthToken('vendor');
   
   const formData = new FormData();
   formData.append('sku', productData.sku);
@@ -750,7 +789,7 @@ export const getProducts = async (
   if (filters?.maxPrice) params.append('maxPrice', filters.maxPrice.toString());
   if (filters?.search) params.append('search', filters.search);
 
-  const token = getAuthToken();
+  const token = getAuthToken('vendor');
   const response = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`, {
     method: 'GET',
     headers: {
@@ -761,6 +800,113 @@ export const getProducts = async (
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch products' }));
     throw new Error(error.message || 'Failed to fetch products');
+  }
+
+  return await response.json();
+};
+
+// Get single product by ID
+export const getProductById = async (productId: string): Promise<{ success: boolean; data: Product }> => {
+  const token = getAuthToken('vendor');
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+    method: 'GET',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch product' }));
+    throw new Error(error.message || 'Failed to fetch product');
+  }
+
+  return await response.json();
+};
+
+// Update product
+export const updateProduct = async (productId: string, productData: Partial<ProductData> & { description?: string; price?: number }): Promise<ProductResponse> => {
+  const token = getAuthToken('vendor');
+  
+  const formData = new FormData();
+  
+  if (productData.sku) formData.append('sku', productData.sku);
+  if (productData.brand) formData.append('brand', productData.brand);
+  if (productData.productName) formData.append('productName', productData.productName);
+  if (productData.description) formData.append('description', productData.description);
+  if (productData.price) formData.append('price', productData.price.toString());
+  if (productData.weight) formData.append('weight', JSON.stringify(productData.weight));
+  if (productData.dimensions) formData.append('dimensions', JSON.stringify(productData.dimensions));
+  if (productData.color) formData.append('color', productData.color);
+  if (productData.material) formData.append('material', productData.material);
+  if (productData.packSize) formData.append('packSize', productData.packSize);
+  if (productData.uom) formData.append('uom', productData.uom);
+  if (productData.gstSlab) formData.append('gstSlab', productData.gstSlab.toString());
+  if (productData.categories) formData.append('categories', productData.categories);
+  
+  // Append images only if they are new files (not URLs)
+  if (productData.images && Array.isArray(productData.images)) {
+    productData.images.forEach((image) => {
+      if (image instanceof File) {
+        formData.append('images', image);
+      }
+    });
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+    method: 'PUT',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to update product' }));
+    throw new Error(error.message || 'Failed to update product');
+  }
+
+  return await response.json();
+};
+
+// Delete Product
+export const deleteProduct = async (productId: string): Promise<{ success: boolean; message: string }> => {
+  const token = getAuthToken('vendor');
+
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete product' }));
+    throw new Error(error.message || 'Failed to delete product');
+  }
+
+  return await response.json();
+};
+
+// Toggle Product Status
+export const toggleProductStatus = async (productId: string): Promise<{ 
+  success: boolean; 
+  message: string; 
+  data: { id: string; productName: string; status: string } 
+}> => {
+  const token = getAuthToken('vendor');
+
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}/toggle-status`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to toggle product status' }));
+    throw new Error(error.message || 'Failed to toggle product status');
   }
 
   return await response.json();

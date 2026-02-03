@@ -27,14 +27,23 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { VendorLayout } from "@/components/vendor/vendor-layout"
-import { getProducts, type Product } from "@/lib/api"
+import { getProducts, deleteProduct, toggleProductStatus, type Product } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 export default function VendorProductsPage() {
@@ -46,6 +55,10 @@ export default function VendorProductsPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalProducts, setTotalProducts] = useState(0)
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const [togglingProductId, setTogglingProductId] = useState<string | null>(null)
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("")
@@ -102,16 +115,55 @@ export default function VendorProductsPage() {
     fetchProducts(page)
   }
 
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return
+
+    try {
+      setDeletingProductId(productToDelete._id)
+      setDeleteDialogOpen(false)
+      const response = await deleteProduct(productToDelete._id)
+      if (response.success) {
+        fetchProducts(page)
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error)
+      alert(error instanceof Error ? error.message : "Failed to delete product")
+    } finally {
+      setDeletingProductId(null)
+      setProductToDelete(null)
+    }
+  }
+
+  const handleToggleStatus = async (productId: string) => {
+    try {
+      setTogglingProductId(productId)
+      const response = await toggleProductStatus(productId)
+      if (response.success) {
+        // Update the product in the local state
+        setProducts((prevProducts) =>
+          prevProducts.map((p) =>
+            p._id === productId ? { ...p, status: response.data.status } : p
+          )
+        )
+      }
+    } catch (error) {
+      console.error("Error toggling product status:", error)
+      alert(error instanceof Error ? error.message : "Failed to toggle product status")
+    } finally {
+      setTogglingProductId(null)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400"
+        return "bg-amber-500/90 text-white hover:bg-amber-600"
       case "approved":
-        return "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400"
+        return "bg-emerald-500/90 text-white hover:bg-emerald-600"
       case "rejected":
-        return "bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400"
+        return "bg-red-500/90 text-white hover:bg-red-600"
       default:
-        return "bg-slate-500/10 text-slate-600 hover:bg-slate-500/20 dark:text-slate-400"
+        return "bg-slate-500/90 text-white hover:bg-slate-600"
     }
   }
 
@@ -345,6 +397,18 @@ export default function VendorProductsPage() {
                           product.approvalStatus.slice(1)}
                       </Badge>
                     </div>
+                    <div className="absolute left-3 top-3">
+                      <Badge 
+                        className={cn(
+                          "font-semibold",
+                          product.status === "active" 
+                            ? "bg-green-500/90 text-white hover:bg-green-600" 
+                            : "bg-slate-500/90 text-white hover:bg-slate-600"
+                        )}
+                      >
+                        {product.status === "active" ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
                   </div>
 
                   {/* Product Info */}
@@ -366,6 +430,25 @@ export default function VendorProductsPage() {
                         <p className="text-xl font-bold text-violet-600 dark:text-violet-400">
                           ₹{product.price}
                         </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Status:</p>
+                        <Switch
+                          checked={product.status === "active"}
+                          onCheckedChange={() => handleToggleStatus(product._id)}
+                          disabled={togglingProductId === product._id}
+                          className="data-[state=checked]:bg-green-600"
+                        />
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          {togglingProductId === product._id ? (
+                            <Loader2 className="h-4 w-4 animate-spin inline" />
+                          ) : (
+                            product.status === "active" ? "Active" : "Inactive"
+                          )}
+                        </span>
                       </div>
                     </div>
 
@@ -396,17 +479,34 @@ export default function VendorProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40 rounded-lg">
-                          <DropdownMenuItem className="gap-2 rounded-lg cursor-pointer">
+                          <DropdownMenuItem 
+                            className="gap-2 rounded-lg cursor-pointer"
+                            onClick={() => navigate(`/vendor/products/${product._id}/view`)}
+                          >
                             <Eye className="h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 rounded-lg cursor-pointer">
+                          <DropdownMenuItem 
+                            className="gap-2 rounded-lg cursor-pointer"
+                            onClick={() => navigate(`/vendor/products/${product._id}/edit`)}
+                          >
                             <Edit className="h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 rounded-lg text-red-600 cursor-pointer focus:text-red-600 dark:text-red-400">
-                            <Trash2 className="h-4 w-4" />
-                            Delete
+                          <DropdownMenuItem 
+                            className="gap-2 rounded-lg text-red-600 cursor-pointer focus:text-red-600 dark:text-red-400"
+                            onClick={() => {
+                              setProductToDelete(product)
+                              setDeleteDialogOpen(true)
+                            }}
+                            disabled={deletingProductId === product._id}
+                          >
+                            {deletingProductId === product._id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                            {deletingProductId === product._id ? "Deleting..." : "Delete"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -453,6 +553,37 @@ export default function VendorProductsPage() {
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Delete Product</DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Are you sure you want to delete this product? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setProductToDelete(null)
+              }}
+              className="rounded-lg"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteProduct}
+              className="rounded-lg bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </VendorLayout>
   )
 }

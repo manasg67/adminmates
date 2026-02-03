@@ -12,6 +12,7 @@ import VendorsPage from './pages/admin/vendors'
 import CompaniesPage from './pages/admin/companies'
 import SubAdminsPage from './pages/admin/sub-admin'
 import AddProductPage from './pages/vendor/add-product'
+import EditProductPage from './pages/vendor/edit-product'
 import VendorProductsPage from './pages/vendor/products'
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/vendor/products" element={<VendorProductsPage />} />
           <Route path="/vendor/add-product" element={<AddProductPage />} />
+          <Route path="/vendor/products/:productId/edit" element={<EditProductPage />} />
           <Route path="/companies/dashboard" element={<CompaniesDashboard />} />
           <Route path="/admin/sub-admins" element={<SubAdminsPage />} />  
         </Routes>
