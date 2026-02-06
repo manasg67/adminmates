@@ -1,11 +1,10 @@
 import { Users, ShoppingCart, Package, TrendingUp } from "lucide-react"
-import { Header } from "@/components/header"
+import { CompanyLayout } from "@/components/company/company-layout"
 
 export default function CompaniesDashboard() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <CompanyLayout>
+      <div className="p-8">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Users className="h-8 w-8 text-blue-500" />
@@ -57,7 +56,7 @@ export default function CompaniesDashboard() {
           <h2 className="text-xl font-semibold mb-4">Company Features</h2>
           <p className="text-muted-foreground">Company dashboard content goes here...</p>
         </div>
-      </main>
-    </div>
+      </div>
+    </CompanyLayout>
   )
 }

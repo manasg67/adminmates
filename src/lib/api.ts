@@ -21,6 +21,12 @@ export interface User {
   role: string;
   isApproved?: boolean;
   approvalStatus?: string;
+  company?: {
+    id: string;
+    name: string;
+    companyLocation?: string;
+    gstNumber?: string;
+  };
 }
 
 export interface AuthResponse {
@@ -45,6 +51,10 @@ const normalizeRole = (role?: string): UserRole | null => {
   const normalized = role.toLowerCase();
   if (normalized === 'admin') return 'admin';
   if (normalized === 'vendor') return 'vendor';
+  if (normalized === 'super-admin') return 'company';
+  if (normalized === 'company-admin') return 'company';
+  if (normalized === 'company-user') return 'company';
+  if (normalized === 'user') return 'company';
   if (normalized === 'company') return 'company';
   return null;
 };
@@ -118,7 +128,8 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
   
   // Store token and user data
   if (data.success && data.data.token) {
-    const role = normalizeRole(data.data.user.role) || 'vendor';
+    const normalized = normalizeRole(data.data.user.role) || 'vendor';
+    const role = normalized === 'admin' && data.data.user.company ? 'company' : normalized;
     setAuthToken(data.data.token, role);
     setUserData(data.data.user);
   }
@@ -148,12 +159,49 @@ export const signup = async (userData: SignupRequest | FormData): Promise<AuthRe
   
   // Store token and user data
   if (data.success && data.data.token) {
-    const role = normalizeRole(data.data.user.role) || 'vendor';
+    const normalized = normalizeRole(data.data.user.role) || 'vendor';
+    const role = normalized === 'admin' && data.data.user.company ? 'company' : normalized;
     setAuthToken(data.data.token, role);
     setUserData(data.data.user);
   }
 
   return data;
+};
+
+// Forgot Password API
+export const forgotPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to send reset code' }));
+    throw new Error(error.message || 'Failed to send reset code');
+  }
+
+  return await response.json();
+};
+
+// Reset Password API
+export const resetPassword = async (email: string, otp: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, otp, newPassword }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to reset password' }));
+    throw new Error(error.message || 'Failed to reset password');
+  }
+
+  return await response.json();
 };
 
 // Get role-based dashboard path
@@ -164,6 +212,9 @@ export const getDashboardPath = (role: string): string => {
       return '/admin/dashboard';
     case 'vendor':
       return '/vendor/dashboard';
+    case 'super-admin':
+    case 'company-admin':
+    case 'company-user':
     case 'user':
     case 'company':
     case 'companies':
@@ -300,6 +351,54 @@ export interface CompaniesResponse {
   };
 }
 
+export interface CompanyUser {
+  id?: string;
+  _id?: string;
+  name: string;
+  email: string;
+  role: string;
+  isApproved?: boolean;
+  approvalStatus?: string;
+  isActive?: boolean;
+  company?: {
+    _id?: string;
+    name: string;
+    email?: string;
+  };
+  branch?: {
+    _id?: string;
+    branchName: string;
+    location: string;
+    approvalStatus?: string;
+  };
+  createdBy?: {
+    _id?: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CompanyUsersResponse {
+  success: boolean;
+  message?: string;
+  data: CompanyUser[];
+  pagination?: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  count?: number;
+  totalUsers?: number;
+  totalPages?: number;
+  currentPage?: number;
+}
+
 // Get vendors with filters
 export const getVendors = async (
   status?: 'pending' | 'approved' | 'rejected',
@@ -379,6 +478,38 @@ export const getCompanies = async (
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch companies' }));
     throw new Error(error.message || 'Failed to fetch companies');
+  }
+
+  return await response.json();
+};
+
+export const getCompanyUsers = async (
+  page: number = 1,
+  limit: number = 10,
+  search?: string,
+  role: string = 'company-admin'
+): Promise<CompanyUsersResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (search) {
+    params.append('search', search);
+  }
+
+  if (role) {
+    params.append('role', role);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/company/users?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders('company'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch company users' }));
+    throw new Error(error.message || 'Failed to fetch company users');
   }
 
   return await response.json();
@@ -528,6 +659,92 @@ export const createUser = async (data: { name: string; email: string; gstNumber:
   return await response.json();
 };
 
+export const createCompanyAdmin = async (data: { name: string; email: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+  const response = await fetch(`${API_BASE_URL}/api/company/create-admin`, {
+    method: 'POST',
+    headers: getAuthHeaders('company'),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create company admin' }));
+    throw new Error(error.message || 'Failed to create company admin');
+  }
+
+  return await response.json();
+};
+
+export interface Branch {
+  _id?: string;
+  id?: string;
+  branchName: string;
+  location: string;
+  branchAdminId?: string;
+  branchAdmin?: {
+    _id?: string;
+    name: string;
+    email: string;
+  };
+  company?: {
+    _id?: string;
+    name: string;
+  };
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BranchesResponse {
+  success: boolean;
+  message?: string;
+  data: Branch[];
+  pagination?: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  totalBranches?: number;
+  totalPages?: number;
+  currentPage?: number;
+}
+
+export const createBranch = async (data: { branchName: string; location: string; branchAdminId: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+  const response = await fetch(`${API_BASE_URL}/api/branches/create`, {
+    method: 'POST',
+    headers: getAuthHeaders('company'),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create branch' }));
+    throw new Error(error.message || 'Failed to create branch');
+  }
+
+  return await response.json();
+};
+
+export const getMyBranches = async (page: number = 1, limit: number = 10): Promise<BranchesResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  const response = await fetch(`${API_BASE_URL}/api/branches/my-branches?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders('company'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch branches' }));
+    throw new Error(error.message || 'Failed to fetch branches');
+  }
+
+  return await response.json();
+};
+
 // Create vendor
 export const createVendor = async (data: { name: string; email: string; gstNumber: string; panCard: string }): Promise<{ success: boolean; message: string; data?: any }> => {
   const response = await fetch(`${API_BASE_URL}/api/admin/create-vendor`, {
@@ -570,6 +787,121 @@ export const toggleSubAdminStatus = async (id: string): Promise<{ success: boole
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to toggle status' }));
     throw new Error(error.message || 'Failed to toggle status');
+  }
+
+  return await response.json();
+};
+
+// Get all branches with filters (admin)
+export const getAllBranches = async (
+  status?: 'pending' | 'approved' | 'rejected',
+  page: number = 1,
+  limit: number = 10
+): Promise<BranchesResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (status) {
+    params.append('status', status);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/branches?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch branches' }));
+    throw new Error(error.message || 'Failed to fetch branches');
+  }
+
+  return await response.json();
+};
+
+// Approve branch
+export const approveBranch = async (id: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/branches/approve/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to approve branch' }));
+    throw new Error(error.message || 'Failed to approve branch');
+  }
+
+  return await response.json();
+};
+
+// Reject branch
+export const rejectBranch = async (id: string, reason?: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/branches/reject/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders('admin'),
+    body: JSON.stringify({ reason: reason || 'Rejected by admin' }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to reject branch' }));
+    throw new Error(error.message || 'Failed to reject branch');
+  }
+
+  return await response.json();
+};
+
+// Toggle branch status
+export const toggleBranchStatus = async (branchId: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/branches/toggle-status/${branchId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to toggle branch status' }));
+    throw new Error(error.message || 'Failed to toggle branch status');
+  }
+
+  return await response.json();
+};
+
+// Create user for branch
+export const createBranchUser = async (data: { name: string; email: string; branchId: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+  const response = await fetch(`${API_BASE_URL}/api/company/create-user`, {
+    method: 'POST',
+    headers: getAuthHeaders('company'),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create branch user' }));
+    throw new Error(error.message || 'Failed to create branch user');
+  }
+
+  return await response.json();
+};
+
+// Get users by branch ID
+export const getUsersByBranch = async (
+  branchId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<CompanyUsersResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    branchId: branchId,
+  });
+
+  const response = await fetch(`${API_BASE_URL}/api/company/users?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders('company'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch branch users' }));
+    throw new Error(error.message || 'Failed to fetch branch users');
   }
 
   return await response.json();
@@ -1120,6 +1452,41 @@ export const rejectProduct = async (productId: string, reason: string): Promise<
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to reject product' }));
     throw new Error(error.message || 'Failed to reject product');
+  }
+
+  return await response.json();
+};
+
+// Vendor Stats Interface
+export interface VendorStatsResponse {
+  success: boolean;
+  userRole: string;
+  stats: {
+    totalProducts: number;
+    approved: number;
+    pending: number;
+    rejected: number;
+    active: number;
+    inactive: number;
+  };
+  data: Product[];
+}
+
+// Get Vendor Stats
+export const getVendorStats = async (): Promise<VendorStatsResponse> => {
+  const token = getAuthToken('vendor');
+
+  const response = await fetch(`${API_BASE_URL}/api/products/admin/stats`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch vendor stats' }));
+    throw new Error(error.message || 'Failed to fetch vendor stats');
   }
 
   return await response.json();

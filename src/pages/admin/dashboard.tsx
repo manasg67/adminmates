@@ -12,9 +12,11 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  MapPin,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getStats, getVendors, getCompanies, approveUser, rejectUser, formatRelativeTime, type VendorUser } from "@/lib/api"
+import { Badge } from "@/components/ui/badge"
+import { getStats, getVendors, getCompanies, approveUser, rejectUser, getAllBranches, approveBranch, rejectBranch, formatRelativeTime, type VendorUser, type Branch } from "@/lib/api"
 
 interface Request {
   id: string
@@ -35,6 +37,8 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
+  const [pendingBranches, setPendingBranches] = useState<Branch[]>([])
+  const [branchesProcessingIds, setBranchesProcessingIds] = useState<Set<string>>(new Set())
 
   // Fetch dashboard data
   useEffect(() => {
@@ -96,6 +100,12 @@ export default function AdminDashboard() {
         // The API returns most recent first, so we keep the order
 
         setRecentRequests(requests)
+
+        // Fetch pending branches
+        const branchesResponse = await getAllBranches('pending', 1, 5)
+        if (branchesResponse.success && branchesResponse.data) {
+          setPendingBranches(branchesResponse.data)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load dashboard data")
         console.error("Error fetching dashboard data:", err)
@@ -165,6 +175,48 @@ export default function AdminDashboard() {
       alert(err instanceof Error ? err.message : "Failed to reject request")
     } finally {
       setProcessingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  const handleApproveBranch = async (id: string) => {
+    try {
+      setBranchesProcessingIds((prev) => new Set(prev).add(id))
+      
+      await approveBranch(id)
+      
+      // Remove from pending branches
+      setPendingBranches((prev) => prev.filter((b) => (b._id || b.id) !== id))
+    } catch (err) {
+      console.error("Error approving branch:", err)
+      alert(err instanceof Error ? err.message : "Failed to approve branch")
+    } finally {
+      setBranchesProcessingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  const handleRejectBranch = async (id: string) => {
+    try {
+      setBranchesProcessingIds((prev) => new Set(prev).add(id))
+      
+      const reason = prompt("Please provide a reason for rejection (optional):") || undefined
+      
+      await rejectBranch(id, reason)
+      
+      // Remove from pending branches
+      setPendingBranches((prev) => prev.filter((b) => (b._id || b.id) !== id))
+    } catch (err) {
+      console.error("Error rejecting branch:", err)
+      alert(err instanceof Error ? err.message : "Failed to reject branch")
+    } finally {
+      setBranchesProcessingIds((prev) => {
         const next = new Set(prev)
         next.delete(id)
         return next
@@ -339,6 +391,117 @@ export default function AdminDashboard() {
           onReject={handleReject}
           processingIds={processingIds}
         />
+
+        {/* Pending Branches */}
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="border-b border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-950">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-500/10">
+                <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">
+                  Pending Branch Approvals
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {pendingBranches.length} branch{pendingBranches.length !== 1 ? "es" : ""} awaiting approval
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {pendingBranches.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+              No pending branches to review
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-950">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Branch Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Branch Admin
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Company
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                  {pendingBranches.map((branch) => (
+                    <tr key={branch._id || branch.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {branch.branchName}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                          <MapPin className="h-4 w-4" />
+                          {branch.location}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm">
+                          <p className="font-semibold text-slate-900 dark:text-white">
+                            {branch.branchAdmin?.name || "N/A"}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {branch.branchAdmin?.email}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline" className="bg-slate-100 dark:bg-slate-800">
+                          {branch.company?.name || "Unknown"}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+                            onClick={() => handleApproveBranch(branch._id || branch.id || "")}
+                            disabled={branchesProcessingIds.has(branch._id || branch.id || "")}
+                          >
+                            {branchesProcessingIds.has(branch._id || branch.id || "") ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                            onClick={() => handleRejectBranch(branch._id || branch.id || "")}
+                            disabled={branchesProcessingIds.has(branch._id || branch.id || "")}
+                          >
+                            {branchesProcessingIds.has(branch._id || branch.id || "") ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </AdminLayout>
   )

@@ -3,6 +3,7 @@ import './App.css'
 import HomePage from './pages/home'
 import LoginPage from './pages/login'
 import SignupPage from './pages/signup'
+import ForgotPasswordPage from './pages/forgot-password'
 
 // Dashboard pages
 import AdminDashboard from './pages/admin/dashboard'
@@ -15,6 +16,10 @@ import ProductApprovalPage from './pages/admin/product-approval'
 import AddProductPage from './pages/vendor/add-product'
 import EditProductPage from './pages/vendor/edit-product'
 import VendorProductsPage from './pages/vendor/products'
+import CompanyAdminsPage from './pages/companies/admins'
+import BranchesPage from './pages/companies/branches'
+import CompanyUsersPage from './pages/companies/users'
+import CompanyProductsPage from './pages/companies/products'
 
 function App() {
   return (
@@ -27,6 +32,7 @@ function App() {
           {/* Unified Auth Routes */}
           <Route path="/" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Dashboard Routes */}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -38,7 +44,11 @@ function App() {
           <Route path="/vendor/add-product" element={<AddProductPage />} />
           <Route path="/vendor/products/:productId/edit" element={<EditProductPage />} />
           <Route path="/companies/dashboard" element={<CompaniesDashboard />} />
+          <Route path="/companies/admins" element={<CompanyAdminsPage />} />
+          <Route path="/companies/branches" element={<BranchesPage />} />
           <Route path="/admin/sub-admins" element={<SubAdminsPage />} />  
+          <Route path="/companies/users" element={<CompanyUsersPage />} />
+          <Route path="/companies/products" element={<CompanyProductsPage />} />
         </Routes>
       </BrowserRouter>
     </>
