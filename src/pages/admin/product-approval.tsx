@@ -40,7 +40,6 @@ import {
 export default function ProductApprovalPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [approvalFilter, setApprovalFilter] = useState("pending")
   const [page, setPage] = useState(1)
@@ -50,6 +49,9 @@ export default function ProductApprovalPage() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState("")
   const [isRejectSubmitting, setIsRejectSubmitting] = useState(false)
+  const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false)
+  const [adminCut, setAdminCut] = useState<string>("")
+  const [isApprovalSubmitting, setIsApprovalSubmitting] = useState(false)
   const [actionFeedback, setActionFeedback] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -85,17 +87,36 @@ export default function ProductApprovalPage() {
     }
   }
 
-  const handleApprove = async (productId: string) => {
-    if (!window.confirm('Are you sure you want to approve this product?')) return
+  const handleApproveClick = (product: Product) => {
+    setSelectedProduct(product)
+    setAdminCut("")
+    setIsApprovalDialogOpen(true)
+  }
 
-    setIsSubmitting(true)
+  const handleApprove = async () => {
+    if (!selectedProduct) return
+
+    const adminCutValue = adminCut.trim() ? parseFloat(adminCut) : undefined
+    
+    if (adminCutValue !== undefined && (isNaN(adminCutValue) || adminCutValue < 0)) {
+      setActionFeedback({
+        type: 'error',
+        message: 'Please enter a valid admin margin amount',
+      })
+      return
+    }
+
+    setIsApprovalSubmitting(true)
     try {
-      const response = await approveProduct(productId)
+      const response = await approveProduct(selectedProduct._id, adminCutValue)
       if (response.success) {
         setActionFeedback({
           type: 'success',
           message: 'Product approved successfully!',
         })
+        setIsApprovalDialogOpen(false)
+        setSelectedProduct(null)
+        setAdminCut("")
         fetchProducts()
       }
     } catch (error) {
@@ -104,7 +125,7 @@ export default function ProductApprovalPage() {
         message: error instanceof Error ? error.message : 'Failed to approve product',
       })
     } finally {
-      setIsSubmitting(false)
+      setIsApprovalSubmitting(false)
     }
   }
 
@@ -278,11 +299,19 @@ export default function ProductApprovalPage() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-slate-600 dark:text-slate-400">Price</p>
+                          <p className="text-slate-600 dark:text-slate-400">Selling Price</p>
                           <p className="font-medium text-slate-900 dark:text-white">
                             ₹{product.price}
                           </p>
                         </div>
+                        {product.vendorPrice !== undefined && (
+                          <div>
+                            <p className="text-slate-600 dark:text-slate-400">Vendor Price</p>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              ₹{product.vendorPrice}
+                            </p>
+                          </div>
+                        )}
                         <div>
                           <p className="text-slate-600 dark:text-slate-400">Vendor</p>
                           <p className="font-medium text-slate-900 dark:text-white">
@@ -329,7 +358,7 @@ export default function ProductApprovalPage() {
                               setSelectedProduct(product)
                               setIsRejectDialogOpen(true)
                             }}
-                            disabled={isSubmitting || isRejectSubmitting}
+                            disabled={isRejectSubmitting}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Reject
@@ -338,8 +367,8 @@ export default function ProductApprovalPage() {
                             size="sm"
                             variant="outline"
                             className="flex-1 rounded-lg text-green-600 border-green-200 hover:bg-green-50 dark:border-green-900 dark:hover:bg-green-900/20"
-                            onClick={() => handleApprove(product._id)}
-                            disabled={isSubmitting || isRejectSubmitting}
+                            onClick={() => handleApproveClick(product)}
+                            disabled={isRejectSubmitting}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve
@@ -379,6 +408,106 @@ export default function ProductApprovalPage() {
           </div>
         )}
       </div>
+
+      {/* Approve with Admin Cut Dialog */}
+      <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Approve Product</DialogTitle>
+            <DialogDescription>
+              {selectedProduct?.productName}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 border border-blue-200 dark:border-blue-900">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Set the admin margin (commission) for this product
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="admin-cut">Admin Margin/Commission (Optional)</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600 dark:text-slate-400">₹</span>
+                <Input
+                  id="admin-cut"
+                  type="number"
+                  placeholder="Enter amount (e.g., 50, 100)"
+                  value={adminCut}
+                  onChange={(e) => setAdminCut(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  className="rounded-lg flex-1"
+                />
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                The platform will earn this amount from each sale of this product
+              </p>
+            </div>
+
+            <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-3">
+              <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">Summary:</p>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Product:</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{selectedProduct?.productName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Selling Price:</span>
+                  <span className="font-medium text-slate-900 dark:text-white">₹{selectedProduct?.price}</span>
+                </div>
+                {selectedProduct?.vendorPrice !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">Vendor Price:</span>
+                    <span className="font-medium text-slate-900 dark:text-white">₹{selectedProduct.vendorPrice}</span>
+                  </div>
+                )}
+                {adminCut && (
+                  <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-1 mt-1">
+                    <span className="text-slate-600 dark:text-slate-400">Admin Margin:</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">₹{adminCut}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsApprovalDialogOpen(false)
+                setAdminCut("")
+                setSelectedProduct(null)
+              }}
+              className="rounded-lg"
+              disabled={isApprovalSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleApprove}
+              disabled={isApprovalSubmitting}
+              className="rounded-lg bg-green-600 text-white hover:bg-green-700"
+            >
+              {isApprovalSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve Product
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Dialog */}
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>

@@ -1211,6 +1211,8 @@ export interface Product {
   brand: string;
   productName: string;
   description: string;
+  vendorPrice?: number;
+  adminCut?: number;
   price: number;
   weight: {
     value: number;
@@ -1417,7 +1419,7 @@ export const toggleProductStatus = async (productId: string): Promise<{
 };
 
 // Approve Product (Admin only)
-export const approveProduct = async (productId: string): Promise<{ success: boolean; message: string; data?: any }> => {
+export const approveProduct = async (productId: string, adminCut?: number): Promise<{ success: boolean; message: string; data?: any }> => {
   const token = getAuthToken('admin');
 
   const response = await fetch(`${API_BASE_URL}/api/products/${productId}/approve`, {
@@ -1426,6 +1428,9 @@ export const approveProduct = async (productId: string): Promise<{ success: bool
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` }),
     },
+    body: JSON.stringify({
+      ...(adminCut !== undefined && { adminCut }),
+    }),
   });
 
   if (!response.ok) {

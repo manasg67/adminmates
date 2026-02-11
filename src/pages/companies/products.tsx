@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { getProducts, type Product } from "@/lib/api"
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 10
 
 export default function CompanyProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -205,6 +205,7 @@ export default function CompanyProductsPage() {
 
                     {/* Price */}
                     <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Price</span>
                       <span className="text-xl font-bold text-slate-900 dark:text-white">₹{product.price}</span>
                       <span className="text-xs text-slate-500 dark:text-slate-400">per {product.uom}</span>
                     </div>

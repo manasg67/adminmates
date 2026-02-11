@@ -10,6 +10,8 @@ import {
   Mail,
   FileText,
   AlertCircle,
+  Download,
+  ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -55,6 +57,10 @@ export interface DataItem {
     email: string
   }
   rejectionReason?: string
+  seCertificate?: {
+    url: string
+    publicId: string
+  }
 }
 
 interface DataTableProps {
@@ -68,6 +74,11 @@ export function DataTable({ data, type, onApprove, onReject }: DataTableProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectionReason, setRejectionReason] = useState("")
+  const [certificateDialogOpen, setCertificateDialogOpen] = useState(false)
+  const [selectedCertificate, setSelectedCertificate] = useState<{
+    url: string
+    name: string
+  } | null>(null)
 
   const allSelected = data.length > 0 && selectedIds.length === data.length
   const someSelected = selectedIds.length > 0 && selectedIds.length < data.length
@@ -229,6 +240,9 @@ export function DataTable({ data, type, onApprove, onReject }: DataTableProps) {
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Certificate
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Registered
                 </th>
                 <th className="w-12 px-4 py-3">
@@ -311,6 +325,27 @@ export function DataTable({ data, type, onApprove, onReject }: DataTableProps) {
                     </td>
                     <td className="px-4 py-4">{getStatusBadge(item.approvalStatus)}</td>
                     <td className="px-4 py-4">
+                      {item.seCertificate?.url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedCertificate({
+                              url: item.seCertificate!.url,
+                              name: item.name,
+                            })
+                            setCertificateDialogOpen(true)
+                          }}
+                          className="gap-2 rounded-lg border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-blue-950"
+                        >
+                          <FileText className="h-4 w-4" />
+                          View
+                        </Button>
+                      ) : (
+                        <span className="text-sm text-slate-400">No certificate</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
                       <span className="text-sm text-slate-600 dark:text-slate-400">
                         {formatDate(item.createdAt)}
                       </span>
@@ -381,6 +416,60 @@ export function DataTable({ data, type, onApprove, onReject }: DataTableProps) {
           </div>
         )}
       </div>
+
+      {/* Certificate Viewer Dialog */}
+      <Dialog open={certificateDialogOpen} onOpenChange={setCertificateDialogOpen}>
+        <DialogContent className="rounded-2xl border-slate-200 sm:max-w-2xl dark:border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Certificate - {selectedCertificate?.name}
+            </DialogTitle>
+            <DialogDescription>
+              View the security certificate document
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCertificate?.url && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-2">
+                <a
+                  href={selectedCertificate.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open in new tab
+                </a>
+                <span className="text-xs text-slate-400">or</span>
+                <a
+                  href={selectedCertificate.url}
+                  download
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </a>
+              </div>
+              <div className="min-h-[500px] rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                <iframe
+                  src={selectedCertificate.url}
+                  className="h-full w-full rounded-lg"
+                  title="Certificate"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCertificateDialogOpen(false)}
+              className="rounded-lg"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Rejection Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
