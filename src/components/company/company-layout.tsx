@@ -16,7 +16,6 @@ import {
   Settings,
   Building2,
   Users,
-  FileText,
   DollarSign,
   AlertTriangle,
 } from "lucide-react"
