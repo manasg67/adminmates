@@ -13,7 +13,7 @@ import { CompanyLayout } from "@/components/company/company-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { getProducts, type Product } from "@/lib/api"
+import { getProducts, addToCart, type Product } from "@/lib/api"
 
 const PAGE_SIZE = 10
 
@@ -26,6 +26,8 @@ export default function CompanyProductsPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalProducts, setTotalProducts] = useState(0)
+  const [addingToCart, setAddingToCart] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const fetchProducts = async (pageNum: number = 1) => {
     try {
@@ -60,6 +62,19 @@ export default function CompanyProductsPage() {
   const handleRefresh = () => {
     setIsRefreshing(true)
     fetchProducts(page)
+  }
+
+  const handleAddToCart = async (productId: string, productName: string) => {
+    try {
+      setAddingToCart(productId)
+      await addToCart(productId, 1)
+      setSuccessMessage(`${productName} added to cart!`)
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add to cart")
+    } finally {
+      setAddingToCart(null)
+    }
   }
 
   // Remove client-side filtering since server now handles it
@@ -137,6 +152,20 @@ export default function CompanyProductsPage() {
             {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-600 dark:bg-green-500/20 dark:text-green-300">
+            ✓ {successMessage}
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600 dark:bg-red-500/20 dark:text-red-300">
+            ✕ {error}
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -247,9 +276,18 @@ export default function CompanyProductsPage() {
                     {/* Approval Status & Add to Cart */}
                     <div className="space-y-2">
                       <div>{getApprovalBadge(product.approvalStatus)}</div>
-                      <Button className="w-full gap-2" size="sm">
-                        <ShoppingCart className="h-4 w-4" />
-                        Add to Cart
+                      <Button
+                        className="w-full gap-2"
+                        size="sm"
+                        onClick={() => handleAddToCart(product._id, product.productName)}
+                        disabled={addingToCart === product._id}
+                      >
+                        {addingToCart === product._id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ShoppingCart className="h-4 w-4" />
+                        )}
+                        {addingToCart === product._id ? "Adding..." : "Add to Cart"}
                       </Button>
                     </div>
                   </div>

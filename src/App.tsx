@@ -20,6 +20,10 @@ import CompanyAdminsPage from './pages/companies/admins'
 import BranchesPage from './pages/companies/branches'
 import CompanyUsersPage from './pages/companies/users'
 import CompanyProductsPage from './pages/companies/products'
+import CartPage from './pages/companies/cart'
+import OrdersPage from './pages/companies/orders'
+import MonthlyLimitsPage from './pages/companies/limits'
+import EscalationsPage from './pages/companies/escalations'
 
 function App() {
   return (
@@ -49,6 +53,10 @@ function App() {
           <Route path="/admin/sub-admins" element={<SubAdminsPage />} />  
           <Route path="/companies/users" element={<CompanyUsersPage />} />
           <Route path="/companies/products" element={<CompanyProductsPage />} />
+          <Route path="/companies/cart" element={<CartPage />} />
+          <Route path="/companies/orders" element={<OrdersPage />} />
+          <Route path="/companies/limits" element={<MonthlyLimitsPage />} />
+          <Route path="/companies/escalations" element={<EscalationsPage />} />
         </Routes>
       </BrowserRouter>
     </>

@@ -17,6 +17,8 @@ import {
   Building2,
   Users,
   FileText,
+  DollarSign,
+  AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -79,10 +81,28 @@ export function CompanyLayout({ children }: CompanyLayoutProps) {
             description: "Manage company users",
           },
           {
+            label: "Shopping Cart",
+            icon: ShoppingCart,
+            href: "/companies/cart",
+            description: "Place orders for company",
+          },
+          {
             label: "Orders",
             icon: History,
-            href: "/",
+            href: "/companies/orders",
             description: "Track company orders",
+          },
+          {
+            label: "Monthly Limits",
+            icon: DollarSign,
+            href: "/companies/limits",
+            description: "Manage limits",
+          },
+          {
+            label: "Escalations",
+            icon: AlertTriangle,
+            href: "/companies/escalations",
+            description: "Review escalations",
           },
         ]
       : []),
@@ -95,10 +115,28 @@ export function CompanyLayout({ children }: CompanyLayoutProps) {
             description: "Manage company users",
           },
           {
+            label: "Shopping Cart",
+            icon: ShoppingCart,
+            href: "/companies/cart",
+            description: "Place orders for company",
+          },
+          {
             label: "Orders",
             icon: History,
-            href: "/",
-            description: "Track branch orders",
+            href: "/companies/orders",
+            description: "Track company orders",
+          },
+          {
+            label: "Monthly Limits",
+            icon: DollarSign,
+            href: "/companies/limits",
+            description: "Manage user limits",
+          },
+          {
+            label: "Escalations",
+            icon: AlertTriangle,
+            href: "/companies/escalations",
+            description: "Review escalations",
           },
         ]
       : []),
@@ -111,22 +149,28 @@ export function CompanyLayout({ children }: CompanyLayoutProps) {
             description: "View your cart",
           },
           {
-            label: "Orders",
+            label: "My Orders",
             icon: History,
             href: "/companies/orders",
             description: "Track your orders",
+          },
+          {
+            label: "Monthly Limits",
+            icon: DollarSign,
+            href: "/companies/limits",
+            description: "View your limit",
+          },
+          {
+            label: "Escalations",
+            icon: AlertTriangle,
+            href: "/companies/escalations",
+            description: "Manage escalations",
           },
           {
             label: "Wishlist",
             icon: Heart,
             href: "/companies/wishlist",
             description: "Saved items",
-          },
-          {
-            label: "Requests",
-            icon: FileText,
-            href: "/companies/requests",
-            description: "Send requests to admin",
           },
         ]
       : []),
