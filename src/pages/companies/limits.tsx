@@ -240,9 +240,13 @@ export default function MonthlyLimitsPage() {
 
                         <div className="text-right">
                           <p className="text-sm text-gray-600">Monthly Limit</p>
-                          <p className="text-lg font-semibold text-blue-600">
-                            Loading...
-                          </p>
+                          {user.monthlyLimit === 0 ? (
+                            <Badge variant="secondary">Unlimited</Badge>
+                          ) : (
+                            <p className="text-lg font-semibold text-blue-600">
+                              ₹{user.monthlyLimit?.toLocaleString() || "N/A"}
+                            </p>
+                          )}
                         </div>
 
                         <Button

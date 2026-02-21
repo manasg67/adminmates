@@ -360,6 +360,9 @@ export interface CompanyUser {
   isApproved?: boolean;
   approvalStatus?: string;
   isActive?: boolean;
+  monthlyLimit?: number;
+  monthlySpent?: number;
+  lastResetDate?: string;
   company?: {
     _id?: string;
     name: string;

@@ -45,11 +45,11 @@ export default function SignupPage() {
 
     // Validate GST, PAN Card and Company Location for vendor and company
     if (selectedRole === 'vendor' || selectedRole === 'company') {
-      if (!gstNumber || gstNumber.length !== 15) {
+      if (gstNumber && gstNumber.length !== 15) {
         setError("Please enter a valid 15-character GST number");
         return;
       }
-      if (!panCard || panCard.length !== 10) {
+      if (panCard && panCard.length !== 10) {
         setError("Please enter a valid 10-character PAN Card number");
         return;
       }
@@ -262,13 +262,12 @@ export default function SignupPage() {
                           className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
                           value={gstNumber}
                           onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
-                          required
                           disabled={isLoading}
                           maxLength={15}
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Enter 15-character GST identification number
+                        Enter 15-character GST identification number (optional)
                       </p>
                     </div>
 
@@ -284,13 +283,12 @@ export default function SignupPage() {
                           className="h-11 bg-input border-border focus:ring-2 focus:ring-ring"
                           value={panCard}
                           onChange={(e) => setPanCard(e.target.value.toUpperCase())}
-                          required
                           disabled={isLoading}
                           maxLength={10}
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Enter 10-character PAN Card number (e.g., ABCDE1234F)
+                        Enter 10-character PAN Card number (e.g., ABCDE1234F) (optional)
                       </p>
                     </div>
 

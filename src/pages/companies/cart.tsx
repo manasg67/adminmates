@@ -28,7 +28,7 @@ export default function CartPage() {
   const [placingOrder, setPlacingOrder] = useState(false)
   const [orderNotes, setOrderNotes] = useState("")
   const [placeOrderDialogOpen, setPlaceOrderDialogOpen] = useState(false)
-  const [monthlyLimit, setMonthlyLimit] = useState<{ limit: number; spent: number; remaining: number } | null>(null)
+  const [monthlyLimit, setMonthlyLimit] = useState<{ limit: number | null; spent: number; remaining: number | null; hasUnlimitedAccess: boolean } | null>(null)
   const [orderError, setOrderError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -56,9 +56,10 @@ export default function CartPage() {
       const response = await getMyLimit()
       if (response.success) {
         setMonthlyLimit({
-          limit: response.data.monthlyLimit || 0,
+          limit: response.data.monthlyLimit || null,
           spent: response.data.monthlySpent,
-          remaining: response.data.remainingLimit || 0,
+          remaining: response.data.remainingLimit || null,
+          hasUnlimitedAccess: response.data.hasUnlimitedAccess || false,
         })
       }
     } catch (err) {
@@ -154,7 +155,9 @@ export default function CartPage() {
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-gray-600">Monthly Limit</p>
-                <p className="text-lg font-semibold">₹{monthlyLimit.limit.toLocaleString()}</p>
+                <p className="text-lg font-semibold">
+                  {monthlyLimit.hasUnlimitedAccess ? "Unlimited" : `₹${monthlyLimit.limit?.toLocaleString() || "0"}`}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Spent</p>
@@ -162,8 +165,8 @@ export default function CartPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Remaining</p>
-                <p className={cn("text-lg font-semibold", monthlyLimit.remaining >= 0 ? "text-green-600" : "text-red-600")}>
-                  ₹{monthlyLimit.remaining.toLocaleString()}
+                <p className={cn("text-lg font-semibold", monthlyLimit.hasUnlimitedAccess ? "text-green-600" : monthlyLimit.remaining && monthlyLimit.remaining >= 0 ? "text-green-600" : "text-red-600")}>
+                  {monthlyLimit.hasUnlimitedAccess ? "Unlimited" : `₹${monthlyLimit.remaining?.toLocaleString() || "0"}`}
                 </p>
               </div>
             </div>
@@ -272,7 +275,7 @@ export default function CartPage() {
                   <span className="text-2xl font-bold text-blue-600">₹{cart!.totalAmount.toLocaleString()}</span>
                 </div>
 
-                {monthlyLimit && cart!.totalAmount > monthlyLimit.remaining && (
+                {monthlyLimit && monthlyLimit.remaining !== null && cart!.totalAmount > monthlyLimit.remaining && !monthlyLimit.hasUnlimitedAccess && (
                   <Alert variant="destructive" className="mb-4">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
@@ -285,7 +288,7 @@ export default function CartPage() {
                   className="w-full"
                   size="lg"
                   onClick={() => setPlaceOrderDialogOpen(true)}
-                  disabled={isEmpty || (monthlyLimit ? cart!.totalAmount > monthlyLimit.remaining : false)}
+                  disabled={isEmpty || (monthlyLimit && !monthlyLimit.hasUnlimitedAccess && monthlyLimit.remaining !== null && cart!.totalAmount > monthlyLimit.remaining) || false}
                 >
                   Place Order
                 </Button>
@@ -323,15 +326,18 @@ export default function CartPage() {
           <div className="space-y-4">
             <div>
               <p className="text-sm font-semibold mb-2">Order Amount: ₹{cart?.totalAmount.toLocaleString()}</p>
-              {monthlyLimit && (
+              {monthlyLimit && !monthlyLimit.hasUnlimitedAccess && (
                 <>
-                  <p className="text-sm text-gray-600">Available Limit: ₹{monthlyLimit.remaining.toLocaleString()}</p>
-                  {cart!.totalAmount > monthlyLimit.remaining && (
+                  <p className="text-sm text-gray-600">Available Limit: ₹{monthlyLimit.remaining?.toLocaleString() || "0"}</p>
+                  {monthlyLimit.remaining !== null && cart!.totalAmount > monthlyLimit.remaining && (
                     <p className="text-sm text-red-600 mt-1">
                       This order will need admin approval as it exceeds your limit
                     </p>
                   )}
                 </>
+              )}
+              {monthlyLimit?.hasUnlimitedAccess && (
+                <p className="text-sm text-green-600">You have unlimited access</p>
               )}
             </div>
 

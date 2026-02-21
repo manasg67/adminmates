@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   XCircle,
   MoreHorizontal,
-  Eye,
   Trash2,
   Mail,
   FileText,
@@ -365,14 +364,6 @@ export function DataTable({ data, type, onApprove, onReject }: DataTableProps) {
                           align="end"
                           className="w-48 rounded-xl border-slate-200 shadow-xl dark:border-slate-700"
                         >
-                          <DropdownMenuItem className="gap-2 rounded-lg">
-                            <Eye className="h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 rounded-lg">
-                            <FileText className="h-4 w-4" />
-                            View Documents
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {item.approvalStatus === "pending" && (
                             <>
