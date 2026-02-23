@@ -8,11 +8,11 @@ import {
   Users,
   Building2,
   Shield,
-  Settings,
   LogOut,
   Clock,
-  HelpCircle,
   Package,
+  Truck,
+  ShoppingCart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -30,18 +30,6 @@ interface AdminSidebarProps {
   onLockToggle: () => void
 }
 
-const bottomNavItems = [
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-  },
-  {
-    title: "Help Center",
-    href: "/admin/help",
-    icon: HelpCircle,
-  },
-]
 
 export function AdminSidebar({
   isExpanded,
@@ -125,6 +113,16 @@ export function AdminSidebar({
       title: "Product Approval",
       href: "/admin/product-approval",
       icon: Package,
+    },
+    {
+      title: "Orders",
+      href: "/admin/orders",
+      icon: ShoppingCart,
+    },
+    {
+      title: "Delivery Partners",
+      href: "/admin/delivery-partners",
+      icon: Truck,
     },
     ...(isAdmin ? [{
       title: "Add Sub-Admin",
@@ -276,51 +274,7 @@ export function AdminSidebar({
         {/* Bottom Navigation */}
         <div className="border-t border-slate-800 py-4">
           <div className="space-y-1 px-3">
-            {bottomNavItems.map((item) => {
-              const isActive = pathname === item.href
-              const Icon = item.icon
 
-              const linkContent = (
-                <Link
-                  key={item.href}
-                            to={item.href}
-                  onClick={(e) => e.stopPropagation()}
-                  className={cn(
-                    "group flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-slate-800 text-white"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                  )}
-                >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  <span
-                    className={cn(
-                      "whitespace-nowrap transition-all duration-300",
-                      isExpanded ? "opacity-100" : "w-0 overflow-hidden opacity-0"
-                    )}
-                  >
-                    {item.title}
-                  </span>
-                </Link>
-              )
-
-              if (!isExpanded) {
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                    <TooltipContent
-                      side="right"
-                      sideOffset={12}
-                      className="border-slate-700 bg-slate-800 text-white"
-                    >
-                      {item.title}
-                    </TooltipContent>
-                  </Tooltip>
-                )
-              }
-
-              return linkContent
-            })}
 
             {/* Logout */}
             {!isExpanded ? (
@@ -359,21 +313,6 @@ export function AdminSidebar({
             )}
           </div>
         </div>
-
-        {/* Lock Indicator */}
-        {/* <div
-          className={cn(
-            "absolute -right-3 top-20 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-400 shadow-lg transition-all duration-300 hover:bg-slate-700 hover:text-white",
-            isLocked && "bg-blue-600 text-white border-blue-500 hover:bg-blue-500"
-          )}
-        >
-          <ChevronRight
-            className={cn(
-              "h-3.5 w-3.5 transition-transform duration-300",
-              isExpanded && "rotate-180"
-            )}
-          />
-        </div> */}
       </aside>
     </TooltipProvider>
   )

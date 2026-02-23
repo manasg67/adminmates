@@ -1,13 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Package, Search, Filter, Loader2, Eye, AlertCircle } from "lucide-react"
+import { Package, Search, Filter, Loader2, Eye, AlertCircle, CreditCard, Truck, Phone, MapPin, Star } from "lucide-react"
 import { CompanyLayout } from "@/components/company/company-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -19,11 +21,18 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { getAllOrders, getOrderById, type OrderData } from "@/lib/api"
+import { getAllOrders, getOrderById, placeOrder, verifyPayment, type OrderData } from "@/lib/api"
 import { cn } from "@/lib/utils"
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -33,6 +42,21 @@ const STATUS_COLORS: Record<string, string> = {
   shipped: "bg-purple-100 text-purple-800",
   delivered: "bg-emerald-100 text-emerald-800",
   cancelled: "bg-gray-100 text-gray-800",
+}
+
+const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-50 border-yellow-200 text-yellow-800",
+  completed: "bg-green-50 border-green-200 text-green-800",
+  failed: "bg-red-50 border-red-200 text-red-800",
+}
+
+const DELIVERY_STATUS_COLORS: Record<string, string> = {
+  "not-assigned": "bg-gray-50 border-gray-200 text-gray-800",
+  assigned: "bg-blue-50 border-blue-200 text-blue-800",
+  "picked-up": "bg-yellow-50 border-yellow-200 text-yellow-800",
+  "in-transit": "bg-purple-50 border-purple-200 text-purple-800",
+  delivered: "bg-green-50 border-green-200 text-green-800",
+  cancelled: "bg-red-50 border-red-200 text-red-800",
 }
 
 const PAGE_SIZE = 10
@@ -49,6 +73,12 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null)
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false)
   const [loadingDetails, setLoadingDetails] = useState(false)
+  const [placeOrderDialogOpen, setPlaceOrderDialogOpen] = useState(false)
+  const [orderNotes, setOrderNotes] = useState("")
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [paymentOrder, setPaymentOrder] = useState<any>(null)
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
 
   useEffect(() => {
     loadOrders()
@@ -73,6 +103,98 @@ export default function OrdersPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handlePlaceOrder = async () => {
+    try {
+      setIsPlacingOrder(true)
+      const response = await placeOrder(orderNotes || undefined)
+      if (response.success) {
+        // Show payment dialog with Razorpay order
+        setPaymentOrder(response.data)
+        setPlaceOrderDialogOpen(false)
+        setPaymentDialogOpen(true)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to place order")
+    } finally {
+      setIsPlacingOrder(false)
+    }
+  }
+
+  const handlePaymentClick = async () => {
+    if (!paymentOrder?.payment?.razorpayOrderId) return
+
+    try {
+      setIsProcessingPayment(true)
+
+      // Load Razorpay script if not already loaded
+      if (!window.Razorpay) {
+        const script = document.createElement('script')
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+        script.async = true
+        document.body.appendChild(script)
+        script.onload = () => initializePayment()
+      } else {
+        initializePayment()
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to initiate payment")
+      setIsProcessingPayment(false)
+    }
+  }
+
+  const initializePayment = () => {
+    if (!paymentOrder) return
+
+    const options = {
+      key: paymentOrder.razorpayOrder?.keyId || 'rzp_test_SBCyp5lcne8wWp',
+      amount: paymentOrder.payment?.amount,
+      currency: 'INR',
+      name: 'E-Commerce Platform',
+      description: `Payment for Order ${paymentOrder.orderNumber}`,
+      order_id: paymentOrder.payment?.razorpayOrderId,
+      handler: async (response: any) => {
+        try {
+          setIsProcessingPayment(true)
+          // Verify payment on backend
+          const verifyResponse = await verifyPayment(
+            response.razorpay_order_id,
+            response.razorpay_payment_id,
+            response.razorpay_signature,
+            paymentOrder._id
+          )
+
+          if (verifyResponse.success) {
+            setError(null)
+            alert('Payment successful! Order confirmed.')
+            setPaymentDialogOpen(false)
+            setPaymentOrder(null)
+            setOrderNotes("")
+            loadOrders() // Reload orders to show updated status
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Payment verification failed")
+        } finally {
+          setIsProcessingPayment(false)
+        }
+      },
+      prefill: {
+        name: localStorage.getItem('userName') || '',
+        email: localStorage.getItem('userEmail') || '',
+      },
+      theme: {
+        color: '#3b82f6',
+      },
+      modal: {
+        ondismiss: () => {
+          setIsProcessingPayment(false)
+        },
+      },
+    }
+
+    const razorpay = new window.Razorpay(options)
+    razorpay.open()
   }
 
   const handleViewDetails = async (orderId: string) => {
@@ -140,6 +262,11 @@ export default function OrdersPage() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button onClick={() => setPlaceOrderDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+            <Package className="w-4 h-4 mr-2" />
+            Place New Order
+          </Button>
         </div>
 
         {isLoading ? (
@@ -190,20 +317,79 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {order.wasEscalated && (
-                      <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50">
-                        Escalated
-                      </Badge>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewDetails(order._id)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Details
-                    </Button>
+                  {/* Delivery Partner Info */}
+                  {order.deliveryPartner ? (
+                    <div className="bg-blue-50 p-3 rounded mb-4 border border-blue-200">
+                      <div className="flex items-start gap-2">
+                        <Truck className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-blue-900">Delivery Partner</p>
+                          <p className="text-sm font-medium">{order.deliveryPartner.name}</p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-blue-700">
+                            <div className="flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {order.deliveryPartner.phone}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {order.deliveryPartner.vehicleType} • {order.deliveryPartner.vehicleNumber}
+                            </div>
+                            {order.deliveryPartner.rating && (
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                {order.deliveryPartner.rating.toFixed(1)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {order.deliveryStatus && (
+                        <div className="mt-2 pt-2 border-t border-blue-200">
+                          <Badge className={cn("text-xs", DELIVERY_STATUS_COLORS[order.deliveryStatus] || "")}>
+                            {order.deliveryStatus.charAt(0).toUpperCase() + order.deliveryStatus.slice(1)}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {order.wasEscalated && (
+                        <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50">
+                          Escalated
+                        </Badge>
+                      )}
+                      {order.payment?.paymentStatus && (
+                        <Badge className={cn("border", PAYMENT_STATUS_COLORS[order.payment.paymentStatus] || "")}>
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Payment: {order.payment.paymentStatus.charAt(0).toUpperCase() + order.payment.paymentStatus.slice(1)}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {order.payment?.paymentStatus === 'pending' && (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setPaymentOrder(order)
+                            setPaymentDialogOpen(true)
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Pay Now
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetails(order._id)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Details
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -319,6 +505,14 @@ export default function OrdersPage() {
                   <span className="font-bold">Total Amount:</span>
                   <span className="font-bold text-blue-600">₹{selectedOrder.totalAmount.toLocaleString()}</span>
                 </div>
+                {selectedOrder.payment && (
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-gray-600">Payment Status:</span>
+                    <Badge className={cn("", PAYMENT_STATUS_COLORS[selectedOrder.payment.paymentStatus] || "")}>
+                      {selectedOrder.payment.paymentStatus.charAt(0).toUpperCase() + selectedOrder.payment.paymentStatus.slice(1)}
+                    </Badge>
+                  </div>
+                )}
               </div>
 
               {/* Notes */}
@@ -340,6 +534,104 @@ export default function OrdersPage() {
               )}
             </div>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Place Order Dialog */}
+      <Dialog open={placeOrderDialogOpen} onOpenChange={setPlaceOrderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Place New Order</DialogTitle>
+            <DialogDescription>
+              Review your cart and place an order
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="notes">Order Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Add any special instructions or notes for this order..."
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                className="mt-2"
+                rows={4}
+              />
+            </div>
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                You will be asked to complete payment after placing the order
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPlaceOrderDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handlePlaceOrder} disabled={isPlacingOrder}>
+              {isPlacingOrder && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Place Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete Payment</DialogTitle>
+            <DialogDescription>
+              {paymentOrder?.orderNumber || 'Order'} - Payment Required
+            </DialogDescription>
+          </DialogHeader>
+
+          {paymentOrder && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Order Amount:</span>
+                  <span className="font-semibold">₹{paymentOrder.totalAmount?.toLocaleString() || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Payment Status:</span>
+                  <Badge className={cn("", PAYMENT_STATUS_COLORS[paymentOrder.payment?.paymentStatus] || "")}>
+                    {paymentOrder.payment?.paymentStatus?.charAt(0).toUpperCase() + paymentOrder.payment?.paymentStatus?.slice(1) || 'N/A'}
+                  </Badge>
+                </div>
+                <div className="flex justify-between pt-2 border-t text-lg">
+                  <span className="font-bold">Amount to Pay:</span>
+                  <span className="font-bold text-blue-600">₹{paymentOrder.payment?.amount ? (paymentOrder.payment.amount / 100).toLocaleString() : 'N/A'}</span>
+                </div>
+              </div>
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Click the button below to proceed to Razorpay payment gateway
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePaymentClick}
+              disabled={isProcessingPayment}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isProcessingPayment && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              <CreditCard className="w-4 h-4 mr-2" />
+              Pay with Razorpay
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </CompanyLayout>

@@ -9,8 +9,6 @@ import {
   Menu,
   X,
   ChevronDown,
-  User,
-  Settings,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -152,14 +150,14 @@ export function VendorLayout({ children }: VendorLayoutProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="gap-2 cursor-pointer">
+                {/* <DropdownMenuItem className="gap-2 cursor-pointer">
                   <User className="h-4 w-4" />
                   My Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2 cursor-pointer">
                   <Settings className="h-4 w-4" />
                   Settings
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}

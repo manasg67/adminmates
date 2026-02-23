@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './App.css'
+import LandingPage from './pages/landing'
 import HomePage from './pages/home'
 import LoginPage from './pages/login'
 import SignupPage from './pages/signup'
@@ -13,6 +14,8 @@ import VendorsPage from './pages/admin/vendors'
 import CompaniesPage from './pages/admin/companies'
 import SubAdminsPage from './pages/admin/sub-admin'
 import ProductApprovalPage from './pages/admin/product-approval'
+import DeliveryPartnersPage from './pages/admin/delivery-partners'
+import AdminOrdersPage from './pages/admin/orders'
 import AddProductPage from './pages/vendor/add-product'
 import EditProductPage from './pages/vendor/edit-product'
 import VendorProductsPage from './pages/vendor/products'
@@ -30,11 +33,14 @@ function App() {
     <>
       <BrowserRouter>
         <Routes>
+          {/* Landing page - Root route */}
+          <Route path="/" element={<LandingPage />} />
+
           {/* Home/Landing page */}
           <Route path="/home" element={<HomePage />} />
 
           {/* Unified Auth Routes */}
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
@@ -43,6 +49,8 @@ function App() {
           <Route path="/admin/vendors" element={<VendorsPage />} />
           <Route path="/admin/companies" element={<CompaniesPage />} />
           <Route path="/admin/product-approval" element={<ProductApprovalPage />} />
+          <Route path="/admin/delivery-partners" element={<DeliveryPartnersPage />} />
+          <Route path="/admin/orders" element={<AdminOrdersPage />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/vendor/products" element={<VendorProductsPage />} />
           <Route path="/vendor/add-product" element={<AddProductPage />} />

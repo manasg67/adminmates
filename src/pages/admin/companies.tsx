@@ -11,6 +11,9 @@ import {
   Clock,
   Plus,
   Loader2,
+  Upload,
+  X,
+  FileText,
 } from "lucide-react"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { DataTable, type DataItem } from "@/components/admin/data-table"
@@ -57,6 +60,8 @@ export default function CompaniesPage() {
     panCard: "",
     companyLocation: "",
   })
+  const [certificateFile, setCertificateFile] = useState<File | null>(null)
+  const [certificatePreview, setCertificatePreview] = useState<string>("")
 
   // Calculate stats from companies data
   const stats = [
@@ -171,20 +176,38 @@ export default function CompaniesPage() {
 
   const handleCreateCompany = async () => {
     try {
+      if (!certificateFile) {
+        alert("Please upload a certificate")
+        return
+      }
+
+      if (!newCompany.name.trim() || !newCompany.email.trim() || !newCompany.companyLocation.trim()) {
+        alert("Please fill in all required fields")
+        return
+      }
+
       setIsCreating(true)
-      const response = await createUser({
-        name: newCompany.name,
-        email: newCompany.email,
-        gstNumber: newCompany.gstNumber,
-        panCard: newCompany.panCard,
-        companyLocation: newCompany.companyLocation,
-      })
+      
+      // Use FormData for file upload
+      const formData = new FormData()
+      formData.append('name', newCompany.name)
+      formData.append('email', newCompany.email)
+      formData.append('gstNumber', newCompany.gstNumber)
+      formData.append('panCard', newCompany.panCard)
+      formData.append('companyLocation', newCompany.companyLocation)
+      formData.append('seCertificate', certificateFile)
+
+      const response = await createUser(formData)
 
       if (response.success) {
         // Refresh the list and close dialog
         setCreateDialogOpen(false)
         setNewCompany({ name: "", email: "", gstNumber: "", panCard: "", companyLocation: "" })
-        window.location.reload()
+        setCertificateFile(null)
+        setCertificatePreview("")
+        await fetchCompanies(1, statusFilter)
+      } else {
+        alert(response.message || "Failed to create company")
       }
     } catch (error) {
       console.error("Failed to create company", error)
@@ -192,6 +215,23 @@ export default function CompaniesPage() {
     } finally {
       setIsCreating(false)
     }
+  }
+
+  const handleCertificateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setCertificateFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setCertificatePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeCertificate = () => {
+    setCertificateFile(null)
+    setCertificatePreview("")
   }
 
   return (
@@ -403,6 +443,74 @@ export default function CompaniesPage() {
                     className="rounded-lg border-slate-200 focus:border-blue-300 focus:ring-blue-200 dark:border-slate-700"
                   />
                 </div>
+
+                {/* Certificate Upload */}
+                <div className="space-y-2">
+                  <Label htmlFor="certificate" className="text-sm font-medium">
+                    Business Certificate / Registration Document
+                  </Label>
+                  <div className="relative">
+                    <input
+                      id="certificate"
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      onChange={handleCertificateUpload}
+                      className="hidden"
+                    />
+                    {!certificateFile ? (
+                      <label
+                        htmlFor="certificate"
+                        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6 transition-colors hover:border-blue-400 hover:bg-blue-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700"
+                      >
+                        <Upload className="h-5 w-5 text-slate-400" />
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                            Click to upload certificate
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            PDF, JPG, PNG, DOC up to 10MB
+                          </p>
+                        </div>
+                      </label>
+                    ) : (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {certificateFile.type.startsWith("image/") ? (
+                              <div className="relative">
+                                <img
+                                  src={certificatePreview}
+                                  alt="Certificate"
+                                  className="h-12 w-12 rounded object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <FileText className="h-8 w-8 text-blue-600" />
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                {certificateFile.name}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {(certificateFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={removeCertificate}
+                            className="rounded-lg p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Upload business registration, GST certificate, or other official documents
+                  </p>
+                </div>
               </div>
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button
@@ -420,6 +528,7 @@ export default function CompaniesPage() {
                     !newCompany.gstNumber.trim() ||
                     !newCompany.panCard.trim() ||
                     !newCompany.companyLocation.trim() ||
+                    !certificateFile ||
                     isCreating
                   }
                   className="gap-2 rounded-lg bg-linear-to-r from-blue-500 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-700"

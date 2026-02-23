@@ -7,16 +7,18 @@ import { RequestTable } from "@/components/admin/request-table"
 import {
   Users,
   Building2,
-  Shield,
   Clock,
   CheckCircle,
   XCircle,
   Loader2,
   MapPin,
+  Truck,
+  DollarSign,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { getStats, getVendors, getCompanies, approveUser, rejectUser, getAllBranches, approveBranch, rejectBranch, formatRelativeTime, type VendorUser, type Branch } from "@/lib/api"
+import { Card } from "@/components/ui/card"
+import { getStats, getVendors, getCompanies, approveUser, rejectUser, getAllBranches, approveBranch, rejectBranch, formatRelativeTime, getAdminDashboard, type VendorUser, type Branch, type AdminDashboard } from "@/lib/api"
 
 interface Request {
   id: string
@@ -33,6 +35,7 @@ export default function AdminDashboard() {
     companies: { total: 0, pending: 0, approved: 0, rejected: 0 },
     admins: { total: 0 },
   })
+  const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
   const [recentRequests, setRecentRequests] = useState<Request[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,6 +60,16 @@ export default function AdminDashboard() {
             admins: statsResponse.data.admins || { total: 0 },
           }
           setStats(normalizedStats)
+        }
+
+        // Fetch comprehensive dashboard
+        try {
+          const dashboardResponse = await getAdminDashboard()
+          if (dashboardResponse.success) {
+            setDashboard(dashboardResponse.data)
+          }
+        } catch (dashErr) {
+          console.warn("Could not load comprehensive dashboard:", dashErr)
         }
 
         // Fetch pending vendors and companies
@@ -95,9 +108,6 @@ export default function AdminDashboard() {
             })
           })
         }
-
-        // Sort by date (most recent first) - already sorted by API, but we can reverse if needed
-        // The API returns most recent first, so we keep the order
 
         setRecentRequests(requests)
 
@@ -270,7 +280,7 @@ export default function AdminDashboard() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total Companies"
-            value={stats.companies.total}
+            value={dashboard?.overview.totalCompanies || stats.companies.total}
             description={`${stats.companies.approved} approved`}
             icon={Building2}
             variant="primary"
@@ -278,27 +288,75 @@ export default function AdminDashboard() {
           />
           <StatsCard
             title="Total Vendors"
-            value={stats.vendors.total}
+            value={dashboard?.overview.totalVendors || stats.vendors.total}
             description={`${stats.vendors.approved} approved`}
             icon={Users}
             variant="accent"
             trend={{ value: 8, isPositive: true }}
           />
           <StatsCard
-            title="Admins"
-            value={stats.admins.total}
-            description="Platform administrators"
-            icon={Shield}
+            title="Delivery Partners"
+            value={dashboard?.overview.totalDeliveryPartners || 0}
+            description={`${dashboard?.deliveryPartners.active || 0} active`}
+            icon={Truck}
             variant="success"
+            trend={{ value: 5, isPositive: true }}
           />
           <StatsCard
-            title="Pending Requests"
-            value={stats.companies.pending + stats.vendors.pending}
-            description="Awaiting review"
-            icon={Clock}
+            title="Total Revenue"
+            value={dashboard ? `₹${(dashboard.overview.totalRevenue / 100000).toFixed(0)}L` : "₹0"}
+            description={`${dashboard?.overview.totalOrders || 0} orders`}
+            icon={DollarSign}
             variant="warning"
           />
         </div>
+
+        {/* Comprehensive Dashboard Stats - if available */}
+        {dashboard && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="p-6">
+              <h3 className="font-bold mb-4">Financial Summary</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-3 border-b">
+                  <span className="text-gray-600">Today's Revenue</span>
+                  <span className="font-bold">₹{dashboard.financial.revenueByPeriod.today.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b">
+                  <span className="text-gray-600">This Week</span>
+                  <span className="font-bold">₹{dashboard.financial.revenueByPeriod.thisWeek.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b">
+                  <span className="text-gray-600">This Month</span>
+                  <span className="font-bold">₹{dashboard.financial.revenueByPeriod.thisMonth.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Average Order Value</span>
+                  <span className="font-bold">₹{dashboard.financial.averageOrderValue.toLocaleString()}</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="font-bold mb-4">Order Status Distribution</h3>
+              <div className="space-y-2">
+                {Object.entries(dashboard.orders.byStatus).slice(0, 5).map(([status, count]) => (
+                  <div key={status} className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="capitalize text-xs">{status}</Badge>
+                      <span className="text-sm text-gray-600">{count}</span>
+                    </div>
+                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${(count / dashboard.orders.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Status Breakdown */}
         <div className="grid gap-6 lg:grid-cols-2">

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Bell, Search, Moon, Sun, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {  ChevronDown } from "lucide-react"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -115,7 +114,7 @@ export function AdminHeader({ sidebarExpanded }: AdminHeaderProps) {
         </div>
 
         {/* Search */}
-        <div className="relative">
+        {/* <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
             type="search"
@@ -125,13 +124,13 @@ export function AdminHeader({ sidebarExpanded }: AdminHeaderProps) {
           <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 select-none rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-800 lg:inline-block">
             /
           </kbd>
-        </div>
+        </div> */}
       </div>
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
         {/* Theme Toggle */}
-        <Button
+        {/* <Button
           variant="ghost"
           size="icon"
           className="h-10 w-10 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
@@ -139,10 +138,10 @@ export function AdminHeader({ sidebarExpanded }: AdminHeaderProps) {
           <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
-        </Button>
+        </Button> */}
 
         {/* Notifications */}
-        <DropdownMenu>
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -213,7 +212,7 @@ export function AdminHeader({ sidebarExpanded }: AdminHeaderProps) {
               </Button>
             </div>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
 
         {/* Divider */}
         <div className="mx-2 h-8 w-px bg-slate-200 dark:bg-slate-700" />
@@ -254,7 +253,7 @@ export function AdminHeader({ sidebarExpanded }: AdminHeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800" />
-            <DropdownMenuItem className="cursor-pointer py-2.5 text-slate-700 focus:bg-slate-100 focus:text-slate-900 dark:text-slate-300 dark:focus:bg-slate-800 dark:focus:text-white">
+            {/* <DropdownMenuItem className="cursor-pointer py-2.5 text-slate-700 focus:bg-slate-100 focus:text-slate-900 dark:text-slate-300 dark:focus:bg-slate-800 dark:focus:text-white">
               Profile Settings
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer py-2.5 text-slate-700 focus:bg-slate-100 focus:text-slate-900 dark:text-slate-300 dark:focus:bg-slate-800 dark:focus:text-white">
@@ -262,7 +261,7 @@ export function AdminHeader({ sidebarExpanded }: AdminHeaderProps) {
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer py-2.5 text-slate-700 focus:bg-slate-100 focus:text-slate-900 dark:text-slate-300 dark:focus:bg-slate-800 dark:focus:text-white">
               Help & Support
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800" />
             <DropdownMenuItem 
               onClick={handleLogout}

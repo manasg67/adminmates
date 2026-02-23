@@ -11,6 +11,9 @@ import {
   Clock,
   Plus,
   Loader2,
+  Upload,
+  X,
+  FileText,
 } from "lucide-react"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { DataTable, type DataItem } from "@/components/admin/data-table"
@@ -54,8 +57,11 @@ export default function VendorsPage() {
     name: "",
     email: "",
     gstNumber: "",
-    panCard: "", // Add panCard to the state
+    panCard: "",
+    vendorLocation: "",
   })
+  const [certificateFile, setCertificateFile] = useState<File | null>(null)
+  const [certificatePreview, setCertificatePreview] = useState<string>("")
 
   // Calculate stats from vendors data
   const stats = [
@@ -134,6 +140,21 @@ export default function VendorsPage() {
     fetchVendors(page, statusFilter)
   }
 
+  const handleCertificateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setCertificateFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => setCertificatePreview(reader.result as string)
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeCertificate = () => {
+    setCertificateFile(null)
+    setCertificatePreview("")
+  }
+
   const handleApprove = async (ids: string[]) => {
     try {
       if (ids.length === 1) {
@@ -171,17 +192,29 @@ export default function VendorsPage() {
   const handleCreateVendor = async () => {
     try {
       setIsCreating(true)
-      const response = await createVendor({
-        name: newVendor.name,
-        email: newVendor.email,
-        gstNumber: newVendor.gstNumber,
-        panCard: newVendor.panCard, // Add panCard property
-      })
+      
+      if (!certificateFile) {
+        alert("Please upload S&E Certificate")
+        setIsCreating(false)
+        return
+      }
+
+      const formData = new FormData()
+      formData.append('name', newVendor.name)
+      formData.append('email', newVendor.email)
+      formData.append('gstNumber', newVendor.gstNumber)
+      formData.append('panCard', newVendor.panCard)
+      formData.append('vendorLocation', newVendor.vendorLocation)
+      formData.append('seCertificate', certificateFile)
+
+      const response = await createVendor(formData)
 
       if (response.success) {
         // Refresh the list and close dialog
         setCreateDialogOpen(false)
-        setNewVendor({ name: "", email: "", gstNumber: "", panCard: "" })
+        setNewVendor({ name: "", email: "", gstNumber: "", panCard: "", vendorLocation: "" })
+        setCertificateFile(null)
+        setCertificatePreview("")
         window.location.reload()
       }
     } catch (error) {
@@ -387,6 +420,70 @@ export default function VendorsPage() {
                   className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="vendorLocation" className="text-sm font-medium">
+                  Vendor Location
+                </Label>
+                <Input
+                  id="vendorLocation"
+                  placeholder="Enter vendor location"
+                  value={newVendor.vendorLocation}
+                  onChange={(e) =>
+                    setNewVendor((prev) => ({ ...prev, vendorLocation: e.target.value }))
+                  }
+                  className="rounded-lg border-slate-200 focus:border-violet-300 focus:ring-violet-200 dark:border-slate-700"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="certificate" className="text-sm font-medium">
+                  S&E Certificate PDF <span className="text-red-500">*</span>
+                </Label>
+                <div className="space-y-3">
+                  {!certificatePreview ? (
+                    <label htmlFor="certificate" className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6 transition-colors hover:border-violet-400 hover:bg-violet-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-violet-500 dark:hover:bg-slate-700/50">
+                      <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Click to upload certificate</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">PDF, JPG, PNG, DOC, DOCX</span>
+                      <input
+                        id="certificate"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onChange={handleCertificateUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  ) : (
+                    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+                      <div className="flex items-center gap-3">
+                        {certificatePreview.startsWith('data:image') ? (
+                          <img src={certificatePreview} alt="Preview" className="h-10 w-10 rounded object-cover" />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded bg-violet-100 dark:bg-violet-900">
+                            <FileText className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            {certificateFile?.name}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {(certificateFile?.size || 0) / 1024 > 1024
+                              ? `${((certificateFile?.size || 0) / 1024 / 1024).toFixed(2)} MB`
+                              : `${((certificateFile?.size || 0) / 1024).toFixed(2)} KB`}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeCertificate}
+                        className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
@@ -403,6 +500,7 @@ export default function VendorsPage() {
                   !newVendor.email.trim() ||
                   !newVendor.gstNumber.trim() ||
                   !newVendor.panCard.trim() ||
+                  !newVendor.vendorLocation.trim() ||
                   isCreating
                 }
                 className="gap-2 rounded-lg bg-linear-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"

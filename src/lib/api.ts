@@ -647,11 +647,18 @@ export const bulkReject = async (userIds: string[], reason?: string): Promise<{ 
 };
 
 // Create company (onboarding)
-export const createUser = async (data: { name: string; email: string; gstNumber: string; panCard: string; companyLocation: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+export const createUser = async (data: { name: string; email: string; gstNumber: string; panCard: string; companyLocation: string } | FormData): Promise<{ success: boolean; message: string; data?: any }> => {
+  const baseHeaders = getAuthHeaders('admin');
+  
+  // If data is FormData, only include Authorization header
+  const headers: Record<string, string> = data instanceof FormData 
+    ? { ...(baseHeaders['Authorization'] && { 'Authorization': baseHeaders['Authorization'] }) }
+    : baseHeaders as Record<string, string>;
+
   const response = await fetch(`${API_BASE_URL}/api/admin/create-company`, {
     method: 'POST',
-    headers: getAuthHeaders('admin'),
-    body: JSON.stringify(data),
+    headers,
+    body: data instanceof FormData ? data : JSON.stringify(data),
   });
 
   if (!response.ok) {
@@ -749,11 +756,18 @@ export const getMyBranches = async (page: number = 1, limit: number = 10): Promi
 };
 
 // Create vendor
-export const createVendor = async (data: { name: string; email: string; gstNumber: string; panCard: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+export const createVendor = async (data: { name: string; email: string; gstNumber: string; panCard: string } | FormData): Promise<{ success: boolean; message: string; data?: any }> => {
+  const baseHeaders = getAuthHeaders('admin');
+  
+  // If data is FormData, only include Authorization header
+  const headers: Record<string, string> = data instanceof FormData 
+    ? { ...(baseHeaders['Authorization'] && { 'Authorization': baseHeaders['Authorization'] }) }
+    : baseHeaders as Record<string, string>;
+
   const response = await fetch(`${API_BASE_URL}/api/admin/create-vendor`, {
     method: 'POST',
-    headers: getAuthHeaders('admin'),
-    body: JSON.stringify(data),
+    headers,
+    body: data instanceof FormData ? data : JSON.stringify(data),
   });
 
   if (!response.ok) {
@@ -1761,6 +1775,22 @@ export interface OrderData {
   totalItems: number;
   status: 'pending' | 'approved' | 'rejected' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   wasEscalated: boolean;
+  payment?: {
+    razorpayOrderId: string;
+    paymentStatus: 'pending' | 'completed' | 'failed';
+    amount: number;
+    paymentId?: string;
+    signature?: string;
+  };
+  deliveryPartner?: {
+    _id: string;
+    name: string;
+    phone: string;
+    vehicleType: string;
+    vehicleNumber: string;
+    rating?: number;
+  };
+  deliveryStatus?: 'not-assigned' | 'assigned' | 'picked-up' | 'in-transit' | 'delivered' | 'cancelled';
   escalationDetails?: {
     escalatedFrom: string;
     escalatedTo: string;
@@ -1779,10 +1809,20 @@ export interface LimitInfo {
   remainingLimit: number;
 }
 
+export interface RazorpayOrderData {
+  id: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+}
+
 export interface PlaceOrderResponse {
   success: boolean;
   message: string;
-  data: OrderData;
+  data: {
+    order: OrderData;
+    razorpayOrder: RazorpayOrderData;
+  };
   limitInfo?: LimitInfo;
   needsEscalation?: boolean;
   needsLimitSetup?: boolean;
@@ -1855,7 +1895,7 @@ export const getAllOrders = async (
 
   const response = await fetch(`${API_BASE_URL}/api/orders?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('company'),
+    headers: getAuthHeaders('admin'),
   });
 
   if (!response.ok) {
@@ -1876,6 +1916,41 @@ export const getOrderById = async (orderId: string): Promise<OrderDetailsRespons
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch order' }));
     throw new Error(error.message || 'Failed to fetch order');
+  }
+
+  return await response.json();
+};
+
+// Verify payment
+export interface VerifyPaymentResponse {
+  success: boolean;
+  message: string;
+  data: {
+    order: OrderData;
+    paymentVerified: boolean;
+  };
+}
+
+export const verifyPayment = async (
+  razorpay_order_id: string,
+  razorpay_payment_id: string,
+  razorpay_signature: string,
+  orderId: string
+): Promise<VerifyPaymentResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/orders/verify-payment`, {
+    method: 'POST',
+    headers: getAuthHeaders('company'),
+    body: JSON.stringify({
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      orderId,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Payment verification failed' }));
+    throw new Error(error.message || 'Payment verification failed');
   }
 
   return await response.json();
@@ -2076,6 +2151,311 @@ export const rejectEscalation = async (escalationId: string, responseMessage: st
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to reject escalation' }));
     throw new Error(error.message || 'Failed to reject escalation');
+  }
+
+  return await response.json();
+};
+
+// ===== DELIVERY PARTNERS =====
+
+export interface DeliveryPartner {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  alternatePhone?: string;
+  vehicleType: 'bike' | 'car' | 'van' | 'truck';
+  vehicleNumber: string;
+  drivingLicense: string;
+  address: string;
+  isActive: boolean;
+  totalDeliveries: number;
+  rating?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeliveryPartnersResponse {
+  success: boolean;
+  count: number;
+  totalPartners: number;
+  totalPages: number;
+  currentPage: number;
+  data: DeliveryPartner[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+export interface CreateDeliveryPartnerRequest {
+  name: string;
+  email: string;
+  phone: string;
+  alternatePhone?: string;
+  vehicleType: 'bike' | 'car' | 'van' | 'truck';
+  vehicleNumber: string;
+  drivingLicense: string;
+  address: string;
+}
+
+// Create delivery partner
+export const createDeliveryPartner = async (data: CreateDeliveryPartnerRequest): Promise<{ success: boolean; data: DeliveryPartner }> => {
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners`, {
+    method: 'POST',
+    headers: getAuthHeaders('admin'),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create delivery partner' }));
+    throw new Error(error.message || 'Failed to create delivery partner');
+  }
+
+  return await response.json();
+};
+
+// Get all delivery partners
+export const getAllDeliveryPartners = async (
+  page: number = 1,
+  limit: number = 10,
+  filters?: { isActive?: boolean; vehicleType?: string }
+): Promise<DeliveryPartnersResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (filters?.isActive !== undefined) {
+    params.append('isActive', filters.isActive.toString());
+  }
+  if (filters?.vehicleType) {
+    params.append('vehicleType', filters.vehicleType);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch delivery partners' }));
+    throw new Error(error.message || 'Failed to fetch delivery partners');
+  }
+
+  return await response.json();
+};
+
+// Get delivery partner by ID
+export const getDeliveryPartnerById = async (partnerId: string): Promise<{ success: boolean; data: DeliveryPartner }> => {
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}`, {
+    method: 'GET',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch delivery partner' }));
+    throw new Error(error.message || 'Failed to fetch delivery partner');
+  }
+
+  return await response.json();
+};
+
+// Update delivery partner
+export const updateDeliveryPartner = async (
+  partnerId: string,
+  data: Partial<CreateDeliveryPartnerRequest> & { isActive?: boolean; rating?: number }
+): Promise<{ success: boolean; data: DeliveryPartner }> => {
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders('admin'),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to update delivery partner' }));
+    throw new Error(error.message || 'Failed to update delivery partner');
+  }
+
+  return await response.json();
+};
+
+// Delete delivery partner
+export const deleteDeliveryPartner = async (partnerId: string): Promise<{ success: boolean }> => {
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete delivery partner' }));
+    throw new Error(error.message || 'Failed to delete delivery partner');
+  }
+
+  return await response.json();
+};
+
+// Assign delivery partner to order
+export const assignDeliveryPartner = async (orderId: string, deliveryPartnerId: string): Promise<{ success: boolean; data: OrderData }> => {
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners/assign/${orderId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders('admin'),
+    body: JSON.stringify({ deliveryPartnerId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to assign delivery partner' }));
+    throw new Error(error.message || 'Failed to assign delivery partner');
+  }
+
+  return await response.json();
+};
+
+// Remove delivery partner from order
+export const removeDeliveryPartner = async (orderId: string): Promise<{ success: boolean; data: OrderData }> => {
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners/assign/${orderId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to remove delivery partner' }));
+    throw new Error(error.message || 'Failed to remove delivery partner');
+  }
+
+  return await response.json();
+};
+
+// Get orders assigned to delivery partner
+export const getDeliveryPartnerOrders = async (
+  partnerId: string,
+  page: number = 1,
+  limit: number = 10,
+  status?: string
+): Promise<OrdersListResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (status) {
+    params.append('status', status);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}/orders?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch delivery partner orders' }));
+    throw new Error(error.message || 'Failed to fetch delivery partner orders');
+  }
+
+  return await response.json();
+};
+
+// ===== ADMIN DASHBOARD =====
+
+export interface AdminDashboard {
+  overview: {
+    totalUsers: number;
+    totalCompanies: number;
+    totalVendors: number;
+    totalBranches: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: number;
+    totalDeliveryPartners: number;
+  };
+  users: {
+    total: number;
+    byRole: Record<string, number>;
+    byStatus: Record<string, number>;
+    byApprovalStatus: Record<string, number>;
+    recentRegistrations: Record<string, number>;
+  };
+  companyUsers: {
+    total: number;
+    byRole: Record<string, number>;
+    active: number;
+    inactive: number;
+  };
+  branches: {
+    total: number;
+    byApprovalStatus: Record<string, number>;
+    byStatus: Record<string, number>;
+    recentBranches: Record<string, number>;
+  };
+  products: {
+    total: number;
+    byApprovalStatus: Record<string, number>;
+    byStatus: Record<string, number>;
+    recentProducts: Record<string, number>;
+  };
+  categories: {
+    totalCategories: number;
+    activeCategories: number;
+    inactiveCategories: number;
+    totalSubCategories: number;
+    activeSubCategories: number;
+    inactiveSubCategories: number;
+  };
+  orders: {
+    total: number;
+    byStatus: Record<string, number>;
+    byPaymentStatus: Record<string, number>;
+    recentOrders: Record<string, number>;
+    withDeliveryPartner: number;
+    withoutDeliveryPartner: number;
+  };
+  financial: {
+    totalRevenue: number;
+    averageOrderValue: number;
+    completedOrdersCount: number;
+    revenueByPeriod: Record<string, number>;
+    pendingPaymentsValue: number;
+  };
+  deliveryPartners: {
+    total: number;
+    active: number;
+    inactive: number;
+    byVehicleType: Record<string, number>;
+    totalDeliveries: number;
+    averageRating: number;
+  };
+  carts: {
+    totalCarts: number;
+    activeCarts: number;
+    emptyCarts: number;
+    totalItemsInCarts: number;
+  };
+  topPerformers: {
+    vendors: Array<{ vendorId: string; vendorName: string; vendorEmail: string; productCount: number }>;
+    companies: Array<{ companyId: string; companyName: string; companyEmail: string; orderCount: number; totalSpent: number }>;
+    deliveryPartners: DeliveryPartner[];
+  };
+  recentActivities: {
+    orders: OrderData[];
+    users: any[];
+  };
+  generatedAt: string;
+}
+
+// Get admin dashboard
+export const getAdminDashboard = async (): Promise<{ success: boolean; data: AdminDashboard }> => {
+  const response = await fetch(`${API_BASE_URL}/api/admin/dashboard`, {
+    method: 'GET',
+    headers: getAuthHeaders('admin'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch dashboard' }));
+    throw new Error(error.message || 'Failed to fetch dashboard');
   }
 
   return await response.json();
