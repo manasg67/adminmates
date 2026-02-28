@@ -175,35 +175,36 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-purple-50/30 to-white dark:from-slate-950 dark:via-purple-950/10 dark:to-slate-950 py-20 md:py-32 lg:py-40">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-20 md:py-32 lg:py-40">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 dark:bg-purple-900/20 rounded-full blur-3xl opacity-50" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-violet-200 dark:bg-violet-900/20 rounded-full blur-3xl opacity-50" />
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/20 dark:bg-blue-600/30 rounded-full blur-3xl opacity-60 animate-pulse" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-600/20 dark:bg-purple-600/30 rounded-full blur-3xl opacity-60 animate-pulse" />
+          <div className="absolute top-1/2 left-1/3 w-96 h-96 bg-indigo-600/15 dark:bg-indigo-600/20 rounded-full blur-3xl opacity-40" />
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-block mb-6 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800">
-              <p className="text-sm font-semibold text-purple-700 dark:text-purple-300">✨ The All-in-One Procurement Platform</p>
+            <div className="inline-block mb-6 px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 border border-white/20 backdrop-blur-sm">
+              <p className="text-sm font-semibold text-white">✨ The All-in-One Procurement Platform</p>
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white mb-8 leading-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-8 leading-tight drop-shadow-lg">
               Simplify Your Office Procurement
             </h1>
-            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-white/90 mb-12 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
               One unified platform for office supplies, AMC, and vendor management. Pre-negotiated rates, centralized billing, real-time tracking, and approval workflows.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
                 onClick={() => navigate("/login")}
                 size="lg"
-                className="bg-linear-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700 gap-2 text-lg px-8 py-7 shadow-xl shadow-purple-500/30 font-semibold rounded-xl"
+                className="bg-blue-600 text-white hover:bg-blue-700 gap-2 text-lg px-8 py-7 shadow-2xl shadow-blue-600/30 font-semibold rounded-xl font-black"
               >
                 Get Started <ArrowRight className="h-5 w-5" />
               </Button>
               <Button
                 variant="outline"
                 size="lg"
-                className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-lg px-8 py-7 font-semibold rounded-xl"
+                className="border-white/40 text-white hover:bg-white/10 dark:hover:bg-white/5 text-lg px-8 py-7 font-semibold rounded-xl backdrop-blur-sm font-black"
               >
                 Watch Demo
               </Button>
@@ -213,13 +214,17 @@ export default function LandingPage() {
       </section>
 
       {/* Why Admin Mates */}
-      <section id="features" className="relative py-20 md:py-28 bg-white dark:bg-slate-950">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section id="features" className="relative py-20 md:py-28 bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900/50 dark:to-slate-950">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/30 dark:bg-blue-600/10 rounded-full blur-3xl opacity-40" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/30 dark:bg-indigo-600/10 rounded-full blur-3xl opacity-40" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
               Why Admin Mates?
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            <p className="text-xl text-slate-700 dark:text-slate-300 max-w-2xl mx-auto">
               Everything you need to streamline office procurement and save time and money
             </p>
           </div>
@@ -230,10 +235,11 @@ export default function LandingPage() {
               return (
                 <div
                   key={feature.title}
-                  className="group relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+                  className="group relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-800/80 dark:to-slate-900/80 p-8 shadow-lg hover:shadow-2xl hover:border-blue-400/30 dark:hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-2"
                 >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-transparent dark:from-blue-600/5 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative z-10">
-                    <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br ${feature.color} shadow-lg shadow-purple-500/20 mb-4 group-hover:scale-110 transition-transform`}>
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br ${feature.color} shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
                       <Icon className="h-7 w-7 text-white" />
                     </div>
                     <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-lg">
@@ -251,13 +257,17 @@ export default function LandingPage() {
       </section>
 
       {/* Who It's For */}
-      <section className="relative py-20 md:py-28 bg-linear-to-b from-purple-50 to-white dark:from-purple-950/10 dark:to-slate-950">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 md:py-28 bg-gradient-to-b from-slate-950 via-slate-900/80 to-slate-950 dark:from-slate-950 dark:via-slate-900/50 dark:to-slate-950">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 right-0 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl opacity-40" />
+          <div className="absolute -bottom-40 left-0 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl opacity-40" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
               Who It's For
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400">Perfect for teams of all sizes</p>
+            <p className="text-xl text-slate-300">Perfect for teams of all sizes</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -272,28 +282,28 @@ export default function LandingPage() {
                 title: "Procurement Managers",
                 description: "Pre-negotiated pricing and vendor accountability with detailed tracking.",
                 icon: Briefcase,
-                color: "from-purple-500 to-pink-500"
+                color: "from-purple-500 to-indigo-500"
               },
               {
                 title: "Mid to Large Corporates",
                 description: "Multi-location control with unified dashboards and consolidated reporting.",
                 icon: Building,
-                color: "from-orange-500 to-red-500"
+                color: "from-indigo-500 to-blue-500"
               },
             ].map((item, idx) => {
               const ItemIcon = item.icon
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30"
                 >
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br ${item.color} mb-4`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br ${item.color} mb-4 shadow-lg`}>
                     <ItemIcon className="h-6 w-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                  <h3 className="text-xl font-bold text-white mb-3">
                     {item.title}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-slate-300 leading-relaxed">
                     {item.description}
                   </p>
                 </div>
@@ -301,8 +311,8 @@ export default function LandingPage() {
             })}
           </div>
 
-          <div className="rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 p-10 shadow-lg">
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
+          <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-10 shadow-lg hover:border-blue-500/30 transition">
+            <h3 className="text-2xl font-bold text-white mb-8">
               What You Can Manage
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -313,11 +323,11 @@ export default function LandingPage() {
               ].map((item, idx) => {
                 const ItemIcon = item.icon
                 return (
-                  <div key={idx} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
-                      <ItemIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div key={idx} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-700/40 transition">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-blue-500 to-indigo-500 flex-shrink-0 shadow-lg">
+                      <ItemIcon className="h-5 w-5 text-white" />
                     </div>
-                    <span className="text-slate-700 dark:text-slate-300 font-medium">{item.text}</span>
+                    <span className="text-white font-medium">{item.text}</span>
                   </div>
                 )
               })}
@@ -327,13 +337,17 @@ export default function LandingPage() {
       </section>
 
       {/* Client Features */}
-      <section id="benefits" className="relative py-20 md:py-28 bg-white dark:bg-slate-950">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section id="benefits" className="relative py-20 md:py-28 bg-white dark:bg-slate-900">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl opacity-40" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl opacity-40" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
               Powerful Client Features
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
               Everything your team needs to manage orders, approvals, and payments seamlessly
             </p>
           </div>
@@ -344,16 +358,16 @@ export default function LandingPage() {
               return (
                 <div
                   key={feature.title}
-                  className="group relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+                  className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-gradient-to-br from-slate-50 dark:from-slate-800/50 to-blue-50/50 dark:to-slate-900/50 p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 dark:hover:border-blue-500/30"
                 >
                   <div className="relative z-10">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/20 mb-4 group-hover:scale-110 transition-transform">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 shadow-lg mb-4 group-hover:scale-110 transition-transform">
                       <Icon className="h-7 w-7 text-white" />
                     </div>
                     <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-lg">
                       {feature.title}
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -365,13 +379,17 @@ export default function LandingPage() {
       </section>
 
       {/* Multi-Location Reporting */}
-      <section className="relative py-20 md:py-28 bg-linear-to-b from-emerald-50 to-white dark:from-emerald-950/10 dark:to-slate-950">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 md:py-28 bg-gradient-to-b from-slate-950 via-slate-900/80 to-slate-950 dark:from-slate-950 dark:via-slate-900/50 dark:to-slate-950">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl opacity-40" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl opacity-40" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
               Unified Dashboard & Reporting
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400">Multi-location control in one place</p>
+            <p className="text-xl text-slate-300">Multi-location control in one place</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -383,15 +401,15 @@ export default function LandingPage() {
               ].map((item, idx) => {
                 const ItemIcon = item.icon
                 return (
-                  <div key={idx} className="flex gap-4 items-start">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 flex-shrink-0 shadow-lg shadow-emerald-500/20">
+                  <div key={idx} className="flex gap-4 items-start p-6 rounded-xl bg-slate-800/50 dark:bg-slate-800/40 border border-slate-700/50 hover:border-blue-500/30 hover:bg-slate-800/70 transition">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex-shrink-0 shadow-lg">
                       <ItemIcon className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white mb-2">
+                      <h3 className="font-bold text-white mb-2">
                         {item.title}
                       </h3>
-                      <p className="text-slate-600 dark:text-slate-400">
+                      <p className="text-slate-300">
                         {item.desc}
                       </p>
                     </div>
@@ -400,25 +418,25 @@ export default function LandingPage() {
               })}
             </div>
 
-            <div className="rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 p-10 shadow-2xl">
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4">
+            <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-10 shadow-lg hover:border-blue-500/30 transition">
+              <h3 className="text-3xl font-black text-white mb-4">
                 Unified Admin Dashboard
               </h3>
-              <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+              <p className="text-lg text-slate-300 leading-relaxed mb-6">
                 Forget juggling multiple systems and sheets. Get complete visibility into your procurement operations with our centralized dashboard that consolidates data from all locations.
               </p>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                  <span className="text-slate-700 dark:text-slate-300">Real-time analytics and insights</span>
+                  <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <span className="text-slate-200">Real-time analytics and insights</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                  <span className="text-slate-700 dark:text-slate-300">Customizable reports and exports</span>
+                  <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <span className="text-slate-200">Customizable reports and exports</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                  <span className="text-slate-700 dark:text-slate-300">Multi-level approval tracking</span>
+                  <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <span className="text-slate-200">Multi-level approval tracking</span>
                 </div>
               </div>
             </div>
@@ -427,13 +445,17 @@ export default function LandingPage() {
       </section>
 
       {/* Cost Savings */}
-      <section id="savings" className="relative py-20 md:py-28 bg-white dark:bg-slate-950">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section id="savings" className="relative py-20 md:py-28 bg-white dark:bg-slate-900">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl opacity-40" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl opacity-40" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
               See Your Savings
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
               Upload your recent invoices and discover how much you can save with Admin Mates
             </p>
           </div>
@@ -447,43 +469,43 @@ export default function LandingPage() {
                 {savings.map((item) => (
                   <div
                     key={item.item}
-                    className="rounded-xl border border-slate-200/50 dark:border-slate-800/50 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 p-6 shadow-md hover:shadow-lg transition-all"
+                    className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-gradient-to-r from-slate-50 dark:from-slate-800/50 to-blue-50/50 dark:to-slate-900/50 p-6 shadow-md hover:shadow-lg transition-all hover:border-blue-500/50 dark:hover:border-blue-500/30"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <p className="font-semibold text-slate-900 dark:text-white text-sm md:text-base">{item.item}</p>
-                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold text-sm">
+                      <span className="inline-block px-3 py-1 rounded-full bg-linear-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm shadow-lg">
                         Save {item.saving}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-600 dark:text-slate-400 line-through text-sm">{item.original}</span>
+                        <span className="text-slate-500 dark:text-slate-400 line-through text-sm">{item.original}</span>
                       </div>
                       <ArrowRight className="h-4 w-4 text-slate-400" />
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">{item.saved}</span>
+                      <span className="font-bold text-blue-600 dark:text-blue-400">{item.saved}</span>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-8 rounded-xl bg-linear-to-r from-emerald-500 to-teal-500 p-6 text-white shadow-lg">
+              <div className="mt-8 rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 p-6 text-white shadow-lg">
                 <p className="text-lg font-black">
                   💰 Total Potential Saving: <span className="text-2xl">₹8,000+</span>
                 </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 p-12 shadow-xl flex flex-col items-center justify-center text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-emerald-500 to-teal-500 shadow-2xl shadow-emerald-500/30 mb-6">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-gradient-to-br from-slate-50 dark:from-slate-800/50 to-blue-50/50 dark:to-slate-900/50 p-12 shadow-md flex flex-col items-center justify-center text-center hover:shadow-lg transition hover:border-blue-500/50 dark:hover:border-blue-500/30">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-indigo-600 shadow-lg mb-6">
                 <TrendingDown className="h-10 w-10 text-white" />
               </div>
               <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-3">
                 Upload & Get Your Report
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
+              <p className="text-slate-700 dark:text-slate-300 mb-8 text-lg">
                 Send PDF/Images of your invoices securely. We'll analyze and send you a detailed savings report.
               </p>
               <Button
-                className="bg-linear-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 shadow-xl shadow-emerald-500/30 font-semibold rounded-xl px-8 py-6 text-lg"
+                className="bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg font-semibold rounded-xl px-8 py-6 text-lg"
               >
                 Upload Invoice
               </Button>
@@ -493,10 +515,10 @@ export default function LandingPage() {
       </section>
 
       {/* How We Work Differently */}
-      <section className="relative py-20 md:py-28 bg-linear-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+      <section className="relative py-20 md:py-28 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 -right-32 w-64 h-64 bg-purple-200 dark:bg-purple-900/20 rounded-full blur-3xl opacity-30" />
-          <div className="absolute bottom-0 -left-32 w-64 h-64 bg-violet-200 dark:bg-violet-900/20 rounded-full blur-3xl opacity-30" />
+          <div className="absolute top-0 -right-32 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl opacity-40" />
+          <div className="absolute bottom-0 -left-32 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl opacity-40" />
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
@@ -504,7 +526,7 @@ export default function LandingPage() {
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
               How We Work Differently
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400">What sets Admin Mates apart</p>
+            <p className="text-xl text-slate-600 dark:text-slate-300">What sets Admin Mates apart</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -513,36 +535,40 @@ export default function LandingPage() {
                 title: "Pre‑negotiated Rates",
                 description: "No price volatility or hidden markups.",
                 icon: Zap,
+                color: "from-blue-500 to-blue-600"
               },
               {
                 title: "Vendors Pay",
                 description: "You don't bear commissions — vendors do.",
                 icon: DollarSign,
+                color: "from-indigo-500 to-indigo-600"
               },
               {
                 title: "SLA‑Driven",
                 description: "On‑time delivery, no delay penalties.",
                 icon: CheckCircle2,
+                color: "from-blue-600 to-indigo-600"
               },
               {
                 title: "One Platform",
                 description: "Consolidation reduces admin overhead.",
                 icon: Package,
+                color: "from-indigo-600 to-blue-600"
               },
             ].map((item, idx) => {
               const ItemIcon = item.icon
               return (
                 <div
                   key={idx}
-                  className="rounded-xl border border-slate-200/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 p-6 shadow-md hover:shadow-xl transition-all text-center hover:-translate-y-1"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-gradient-to-br from-slate-50 dark:from-slate-800/50 to-blue-50/50 dark:to-slate-900/50 p-6 shadow-md hover:shadow-lg hover:border-blue-500/50 dark:hover:border-blue-500/30 transition-all text-center hover:-translate-y-1"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-linear-to-br from-purple-500 to-pink-500 mx-auto mb-4 shadow-lg">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-linear-to-br ${item.color} mx-auto mb-4 shadow-lg`}>
                     <ItemIcon className="h-6 w-6 text-white" />
                   </div>
                   <h3 className="font-bold text-slate-900 dark:text-white mb-2 text-lg">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
                     {item.description}
                   </p>
                 </div>

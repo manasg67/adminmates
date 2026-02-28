@@ -9,6 +9,8 @@ import {
   Menu,
   X,
   ChevronDown,
+  FileText,
+  Truck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,6 +39,18 @@ export function VendorLayout({ children }: VendorLayoutProps) {
       icon: LayoutDashboard,
       href: "/vendor/dashboard",
       description: "Overview and statistics",
+    },
+    {
+      label: "Orders",
+      icon: FileText,
+      href: "/vendor/orders",
+      description: "Review and approve orders",
+    },
+    {
+      label: "Delivery Challans",
+      icon: Truck,
+      href: "/vendor/challans",
+      description: "View your delivery challans",
     },
     {
       label: "Products",

@@ -7,7 +7,6 @@ import {
   ShoppingCart,
   Package,
   History,
-  Heart,
   LogOut,
   Menu,
   X,
@@ -16,6 +15,7 @@ import {
   Users,
   DollarSign,
   AlertTriangle,
+  FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -90,6 +90,12 @@ export function CompanyLayout({ children }: CompanyLayoutProps) {
             description: "Track company orders",
           },
           {
+            label: "Invoices",
+            icon: FileText,
+            href: "/companies/invoices",
+            description: "View and pay invoices",
+          },
+          {
             label: "Monthly Limits",
             icon: DollarSign,
             href: "/companies/limits",
@@ -124,6 +130,12 @@ export function CompanyLayout({ children }: CompanyLayoutProps) {
             description: "Track company orders",
           },
           {
+            label: "Invoices",
+            icon: FileText,
+            href: "/companies/invoices",
+            description: "View and pay invoices",
+          },
+          {
             label: "Monthly Limits",
             icon: DollarSign,
             href: "/companies/limits",
@@ -150,25 +162,7 @@ export function CompanyLayout({ children }: CompanyLayoutProps) {
             icon: History,
             href: "/companies/orders",
             description: "Track your orders",
-          },
-          {
-            label: "Monthly Limits",
-            icon: DollarSign,
-            href: "/companies/limits",
-            description: "View your limit",
-          },
-          {
-            label: "Escalations",
-            icon: AlertTriangle,
-            href: "/companies/escalations",
-            description: "Manage escalations",
-          },
-          {
-            label: "Wishlist",
-            icon: Heart,
-            href: "/companies/wishlist",
-            description: "Saved items",
-          },
+          }
         ]
       : []),
   ]

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { ShoppingCart, Trash2, Plus, Minus, Loader2, AlertCircle, CreditCard } from "lucide-react"
 import { CompanyLayout } from "@/components/company/company-layout"
 import { Button } from "@/components/ui/button"
@@ -27,6 +28,7 @@ declare global {
 }
 
 export default function CartPage() {
+  const navigate = useNavigate()
   const [cart, setCart] = useState<CartData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -112,12 +114,13 @@ export default function CartPage() {
       const response = await placeOrder(orderNotes)
       
       if (response.success) {
-        // Show payment dialog with Razorpay order
-        // Extract order and razorpayOrder from response
+        // Show order confirmation (invoice will be created later)
         setPaymentOrder(response.data.order)
-        setRazorpayOrderData(response.data.razorpayOrder)
         setPlaceOrderDialogOpen(false)
-        setPaymentDialogOpen(true)
+        // Navigate to orders page - vendor will create invoice after approval
+        setTimeout(() => {
+          navigate('/companies/orders')
+        }, 1000)
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to place order"

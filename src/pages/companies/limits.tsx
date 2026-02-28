@@ -10,6 +10,13 @@ import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Label } from "@/components/ui/label"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -35,10 +42,15 @@ export default function MonthlyLimitsPage() {
   const [newLimit, setNewLimit] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [selectedRole, setSelectedRole] = useState<string>("company-admin")
 
   useEffect(() => {
     loadMyLimit()
-    loadUsers()
+    loadUsers(1)
+  }, [selectedRole])
+
+  useEffect(() => {
+    loadUsers(page)
   }, [page])
 
   const loadMyLimit = async () => {
@@ -57,11 +69,11 @@ export default function MonthlyLimitsPage() {
     }
   }
 
-  const loadUsers = async () => {
+  const loadUsers = async (pageNum: number = 1) => {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await getCompanyUsers(page, PAGE_SIZE)
+      const response = await getCompanyUsers(pageNum, PAGE_SIZE, undefined, selectedRole)
       if (response.success) {
         setUsers(response.data)
         setTotalPages(response.totalPages || 1)
@@ -208,7 +220,22 @@ export default function MonthlyLimitsPage() {
         {/* Users Limits Section */}
         {myLimit?.role === "company-admin" || myLimit?.role === "super-admin" ? (
           <div>
-            <h2 className="text-xl font-bold mb-4">User Monthly Limits</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">User Monthly Limits</h2>
+              <div className="w-48">
+                <Label htmlFor="role-filter" className="text-sm mb-2 block">Filter by Role</Label>
+                <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value)}>
+                  <SelectTrigger id="role-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="company-admin">Company Admin</SelectItem>
+                    <SelectItem value="company-user">Company User</SelectItem>
+                    <SelectItem value="super-admin">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             
             {isLoading ? (
               <div className="flex items-center justify-center min-h-96">

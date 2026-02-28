@@ -16,17 +16,23 @@ import SubAdminsPage from './pages/admin/sub-admin'
 import ProductApprovalPage from './pages/admin/product-approval'
 import DeliveryPartnersPage from './pages/admin/delivery-partners'
 import AdminOrdersPage from './pages/admin/orders'
+import AdminInvoicesPage from './pages/admin/invoices'
 import AddProductPage from './pages/vendor/add-product'
 import EditProductPage from './pages/vendor/edit-product'
 import VendorProductsPage from './pages/vendor/products'
+import VendorOrdersPage from './pages/vendor/orders'
 import CompanyAdminsPage from './pages/companies/admins'
 import BranchesPage from './pages/companies/branches'
 import CompanyUsersPage from './pages/companies/users'
 import CompanyProductsPage from './pages/companies/products'
 import CartPage from './pages/companies/cart'
 import OrdersPage from './pages/companies/orders'
+import CompanyInvoicesPage from './pages/companies/invoices'
 import MonthlyLimitsPage from './pages/companies/limits'
 import EscalationsPage from './pages/companies/escalations'
+import CreateInvoicePage from './pages/admin/create-invoice'
+import AdminChallansPage from './pages/admin/challans'
+import VendorChallansPage from './pages/vendor/challans'
 
 function App() {
   return (
@@ -51,7 +57,11 @@ function App() {
           <Route path="/admin/product-approval" element={<ProductApprovalPage />} />
           <Route path="/admin/delivery-partners" element={<DeliveryPartnersPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
+          <Route path="/admin/invoices" element={<AdminInvoicesPage />} />
+          <Route path="/admin/challans" element={<AdminChallansPage />} />
+          <Route path="/admin/create-invoice" element={<CreateInvoicePage />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+          <Route path="/vendor/orders" element={<VendorOrdersPage />} />
           <Route path="/vendor/products" element={<VendorProductsPage />} />
           <Route path="/vendor/add-product" element={<AddProductPage />} />
           <Route path="/vendor/products/:productId/edit" element={<EditProductPage />} />
@@ -63,8 +73,10 @@ function App() {
           <Route path="/companies/products" element={<CompanyProductsPage />} />
           <Route path="/companies/cart" element={<CartPage />} />
           <Route path="/companies/orders" element={<OrdersPage />} />
+          <Route path="/companies/invoices" element={<CompanyInvoicesPage />} />
           <Route path="/companies/limits" element={<MonthlyLimitsPage />} />
           <Route path="/companies/escalations" element={<EscalationsPage />} />
+            <Route path="/vendor/challans" element={<VendorChallansPage />} />
         </Routes>
       </BrowserRouter>
     </>

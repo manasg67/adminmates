@@ -9,6 +9,7 @@ import {
   Mail,
   Shield,
   Loader2,
+  Building2,
 } from "lucide-react"
 import { CompanyLayout } from "@/components/company/company-layout"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,14 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { createCompanyAdmin, getCompanyUsers, type CompanyUser } from "@/lib/api"
+import { createCompanyAdmin, getCompanyUsers, getMyBranches, type CompanyUser, type Branch } from "@/lib/api"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const PAGE_SIZE = 10
 
@@ -40,7 +48,9 @@ export default function CompanyAdminsPage() {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [newAdmin, setNewAdmin] = useState({ name: "", email: "" })
+  const [newAdmin, setNewAdmin] = useState({ name: "", email: "", branchId: "" })
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [loadingBranches, setLoadingBranches] = useState(false)
 
   const fetchAdmins = async (pageNum: number = 1, search?: string) => {
     try {
@@ -82,17 +92,35 @@ export default function CompanyAdminsPage() {
     fetchAdmins(page, searchQuery)
   }
 
+  const fetchBranches = async () => {
+    try {
+      setLoadingBranches(true)
+      const response = await getMyBranches(1, 50)
+      setBranches(response.data || [])
+    } catch (err) {
+      console.error('Failed to fetch branches', err)
+    } finally {
+      setLoadingBranches(false)
+    }
+  }
+
+  const handleOpenCreateDialog = () => {
+    setCreateDialogOpen(true)
+    fetchBranches()
+  }
+
   const handleCreateAdmin = async () => {
     try {
       setIsCreating(true)
       const response = await createCompanyAdmin({
         name: newAdmin.name,
         email: newAdmin.email,
+        ...(newAdmin.branchId && { branchId: newAdmin.branchId }),
       })
 
       if (response.success) {
         setCreateDialogOpen(false)
-        setNewAdmin({ name: "", email: "" })
+        setNewAdmin({ name: "", email: "", branchId: "" })
         fetchAdmins(1, searchQuery)
       }
     } catch (err) {
@@ -124,7 +152,7 @@ export default function CompanyAdminsPage() {
             <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
               {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
-            <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+            <Button onClick={handleOpenCreateDialog} className="gap-2">
               <Plus className="h-4 w-4" />
               Create Admin
             </Button>
@@ -170,6 +198,9 @@ export default function CompanyAdminsPage() {
                       Role
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Branch
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                       Active Status
                     </th>
                   </tr>
@@ -196,6 +227,19 @@ export default function CompanyAdminsPage() {
                           <Shield className="mr-1 h-3.5 w-3.5" />
                           {admin.role || "company-admin"}
                         </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        {(admin as any).branch ? (
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-slate-400" />
+                            <div>
+                              <p className="text-sm font-medium text-slate-900 dark:text-white">{(admin as any).branch.branchName}</p>
+                              <p className="text-xs text-slate-500">{(admin as any).branch.approvalStatus === 'approved' ? 'Approved' : (admin as any).branch.approvalStatus || ''}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-slate-400">Not assigned</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <Badge
@@ -263,6 +307,35 @@ export default function CompanyAdminsPage() {
                 onChange={(event) => setNewAdmin((prev) => ({ ...prev, email: event.target.value }))}
                 placeholder="admin@company.com"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Assign Branch</Label>
+              {loadingBranches ? (
+                <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading branches...
+                </div>
+              ) : (
+                <Select
+                  value={newAdmin.branchId}
+                  onValueChange={(value) => setNewAdmin((prev) => ({ ...prev, branchId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.length === 0 ? (
+                      <SelectItem value="none" disabled>No branches available</SelectItem>
+                    ) : (
+                      branches.map((branch) => (
+                        <SelectItem key={branch._id || branch.id} value={branch._id || branch.id || ''}>
+                          {branch.branchName} — {branch.location}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
           <DialogFooter>

@@ -218,7 +218,7 @@ export default function OrdersPage() {
 
   return (
     <CompanyLayout>
-      <div className="space-y-6">
+    <div className="min-h-screen bg-slate-50 p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Package className="w-8 h-8" />
@@ -368,19 +368,6 @@ export default function OrdersPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {order.payment?.paymentStatus === 'pending' && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setPaymentOrder(order)
-                            setPaymentDialogOpen(true)
-                          }}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          Pay Now
-                        </Button>
-                      )}
                       <Button
                         variant="outline"
                         size="sm"

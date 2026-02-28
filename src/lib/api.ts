@@ -50,6 +50,7 @@ const normalizeRole = (role?: string): UserRole | null => {
   if (!role) return null;
   const normalized = role.toLowerCase();
   if (normalized === 'admin') return 'admin';
+  if (normalized === 'sub-admin') return 'admin';
   if (normalized === 'vendor') return 'vendor';
   if (normalized === 'super-admin') return 'company';
   if (normalized === 'company-admin') return 'company';
@@ -209,6 +210,8 @@ export const getDashboardPath = (role: string): string => {
   const normalizedRole = role.toLowerCase();
   switch (normalizedRole) {
     case 'admin':
+            return '/admin/dashboard';
+    case 'sub-admin':
       return '/admin/dashboard';
     case 'vendor':
       return '/vendor/dashboard';
@@ -263,10 +266,11 @@ export interface StatsResponse {
 }
 
 // Get stats
-export const getStats = async (): Promise<StatsResponse> => {
+export const getStats = async (role?: UserRole): Promise<StatsResponse> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/auth/stats`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -406,7 +410,8 @@ export interface CompanyUsersResponse {
 export const getVendors = async (
   status?: 'pending' | 'approved' | 'rejected',
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  role?: UserRole
 ): Promise<VendorsResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -417,9 +422,11 @@ export const getVendors = async (
     params.append('status', status);
   }
 
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/auth/vendors?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -434,7 +441,8 @@ export const getVendors = async (
 export const getUsers = async (
   status?: 'pending' | 'approved' | 'rejected',
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  role?: UserRole
 ): Promise<UsersResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -445,9 +453,11 @@ export const getUsers = async (
     params.append('status', status);
   }
 
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/auth/users?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -462,7 +472,8 @@ export const getUsers = async (
 export const getCompanies = async (
   status?: 'pending' | 'approved' | 'rejected',
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  role?: UserRole
 ): Promise<CompaniesResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -473,9 +484,11 @@ export const getCompanies = async (
     params.append('status', status);
   }
 
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/auth/companies?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -556,7 +569,8 @@ export interface SubAdminsResponse {
 export const getSubAdmins = async (
   page: number = 1,
   limit: number = 10,
-  search?: string
+  search?: string,
+  role?: UserRole
 ): Promise<SubAdminsResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -567,9 +581,11 @@ export const getSubAdmins = async (
     params.append('search', search);
   }
 
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/admin/sub-admins?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -581,10 +597,11 @@ export const getSubAdmins = async (
 };
 
 // Approve user/vendor
-export const approveUser = async (id: string): Promise<{ success: boolean; message: string }> => {
+export const approveUser = async (id: string, role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/auth/approve/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -596,10 +613,11 @@ export const approveUser = async (id: string): Promise<{ success: boolean; messa
 };
 
 // Reject user/vendor
-export const rejectUser = async (id: string, reason?: string): Promise<{ success: boolean; message: string }> => {
+export const rejectUser = async (id: string, reason?: string, role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/auth/reject/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify({ reason: reason || 'Rejected by admin' }),
   });
 
@@ -612,10 +630,11 @@ export const rejectUser = async (id: string, reason?: string): Promise<{ success
 };
 
 // Bulk approve users/vendors
-export const bulkApprove = async (userIds: string[]): Promise<{ success: boolean; message: string }> => {
+export const bulkApprove = async (userIds: string[], role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/auth/bulk-approve`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify({ userIds }),
   });
 
@@ -628,10 +647,11 @@ export const bulkApprove = async (userIds: string[]): Promise<{ success: boolean
 };
 
 // Bulk reject users/vendors
-export const bulkReject = async (userIds: string[], reason?: string): Promise<{ success: boolean; message: string }> => {
+export const bulkReject = async (userIds: string[], reason?: string, role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/auth/bulk-reject`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify({ 
       userIds,
       reason: reason || 'Rejected by admin'
@@ -647,8 +667,9 @@ export const bulkReject = async (userIds: string[], reason?: string): Promise<{ 
 };
 
 // Create company (onboarding)
-export const createUser = async (data: { name: string; email: string; gstNumber: string; panCard: string; companyLocation: string } | FormData): Promise<{ success: boolean; message: string; data?: any }> => {
-  const baseHeaders = getAuthHeaders('admin');
+export const createUser = async (data: { name: string; email: string; gstNumber: string; panCard: string; companyLocation: string } | FormData, role?: UserRole): Promise<{ success: boolean; message: string; data?: any }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+  const baseHeaders = getAuthHeaders(userRole);
   
   // If data is FormData, only include Authorization header
   const headers: Record<string, string> = data instanceof FormData 
@@ -669,7 +690,7 @@ export const createUser = async (data: { name: string; email: string; gstNumber:
   return await response.json();
 };
 
-export const createCompanyAdmin = async (data: { name: string; email: string }): Promise<{ success: boolean; message: string; data?: any }> => {
+export const createCompanyAdmin = async (data: { name: string; email: string; branchId?: string }): Promise<{ success: boolean; message: string; data?: any }> => {
   const response = await fetch(`${API_BASE_URL}/api/company/create-admin`, {
     method: 'POST',
     headers: getAuthHeaders('company'),
@@ -756,8 +777,9 @@ export const getMyBranches = async (page: number = 1, limit: number = 10): Promi
 };
 
 // Create vendor
-export const createVendor = async (data: { name: string; email: string; gstNumber: string; panCard: string } | FormData): Promise<{ success: boolean; message: string; data?: any }> => {
-  const baseHeaders = getAuthHeaders('admin');
+export const createVendor = async (data: { name: string; email: string; gstNumber: string; panCard: string } | FormData, role?: UserRole): Promise<{ success: boolean; message: string; data?: any }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+  const baseHeaders = getAuthHeaders(userRole);
   
   // If data is FormData, only include Authorization header
   const headers: Record<string, string> = data instanceof FormData 
@@ -779,10 +801,11 @@ export const createVendor = async (data: { name: string; email: string; gstNumbe
 };
 
 // Create sub-admin
-export const createSubAdmin = async (data: { name: string; email: string }): Promise<{ success: boolean; message: string; data?: SubAdmin }> => {
+export const createSubAdmin = async (data: { name: string; email: string }, role?: UserRole): Promise<{ success: boolean; message: string; data?: SubAdmin }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/create-sub-admin`, {
     method: 'POST',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify(data),
   });
 
@@ -795,10 +818,11 @@ export const createSubAdmin = async (data: { name: string; email: string }): Pro
 };
 
 // Toggle sub-admin status
-export const toggleSubAdminStatus = async (id: string): Promise<{ success: boolean; message: string }> => {
+export const toggleSubAdminStatus = async (id: string, role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/toggle-status/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -813,7 +837,8 @@ export const toggleSubAdminStatus = async (id: string): Promise<{ success: boole
 export const getAllBranches = async (
   status?: 'pending' | 'approved' | 'rejected',
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  role?: UserRole
 ): Promise<BranchesResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -824,9 +849,11 @@ export const getAllBranches = async (
     params.append('status', status);
   }
 
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/admin/branches?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -838,10 +865,11 @@ export const getAllBranches = async (
 };
 
 // Approve branch
-export const approveBranch = async (id: string): Promise<{ success: boolean; message: string }> => {
+export const approveBranch = async (id: string, role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/branches/approve/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -853,10 +881,11 @@ export const approveBranch = async (id: string): Promise<{ success: boolean; mes
 };
 
 // Reject branch
-export const rejectBranch = async (id: string, reason?: string): Promise<{ success: boolean; message: string }> => {
+export const rejectBranch = async (id: string, reason?: string, role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/branches/reject/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify({ reason: reason || 'Rejected by admin' }),
   });
 
@@ -869,10 +898,11 @@ export const rejectBranch = async (id: string, reason?: string): Promise<{ succe
 };
 
 // Toggle branch status
-export const toggleBranchStatus = async (branchId: string): Promise<{ success: boolean; message: string }> => {
+export const toggleBranchStatus = async (branchId: string, role?: UserRole): Promise<{ success: boolean; message: string }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/branches/toggle-status/${branchId}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -1078,10 +1108,11 @@ export interface ProductResponse {
 }
 
 // Create category (admin only)
-export const createCategory = async (name: string): Promise<{ success: boolean; message: string; data?: Category }> => {
+export const createCategory = async (name: string, role?: UserRole): Promise<{ success: boolean; message: string; data?: Category }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/categories`, {
     method: 'POST',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify({ name }),
   });
 
@@ -1119,11 +1150,13 @@ export const getCategories = async (
 // Create subcategory (admin only)
 export const createSubCategory = async (
   name: string,
-  categoryId: string
+  categoryId: string,
+  role?: UserRole
 ): Promise<{ success: boolean; message: string; data?: SubCategory }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/sub-categories`, {
     method: 'POST',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify({ name, categoryId }),
   });
 
@@ -1741,22 +1774,41 @@ export const clearCart = async (): Promise<CartResponse> => {
 // ===== ORDER MANAGEMENT =====
 
 export interface OrderItem {
-  product: string | CartProduct;
-  productName: string;
-  sku: string;
+  product?: string | CartProduct | {
+    _id?: string;
+    name?: string;
+  };
+  productName?: string;
+  name?: string;
+  sku?: string;
   quantity: number;
-  price: number;
+  price?: number;
+  unitPrice?: number;
   totalPrice: number;
   _id?: string;
 }
 
 export interface OrderData {
   _id: string;
+  id?: string; // Alias for _id
   orderNumber: string;
   company: {
     _id: string;
     name: string;
     email?: string;
+  };
+  vendor?: {
+    _id?: string;
+    id?: string;
+    name: string;
+    email?: string;
+  };
+  branch?: {
+    _id?: string;
+    id?: string;
+    name?: string;
+    branchName?: string;
+    location?: string;
   };
   orderedBy: {
     _id: string;
@@ -1821,7 +1873,6 @@ export interface PlaceOrderResponse {
   message: string;
   data: {
     order: OrderData;
-    razorpayOrder: RazorpayOrderData;
   };
   limitInfo?: LimitInfo;
   needsEscalation?: boolean;
@@ -1880,7 +1931,8 @@ export const getAllOrders = async (
   page: number = 1,
   limit: number = 10,
   sortBy: string = 'createdAt',
-  sortOrder: 'asc' | 'desc' = 'desc'
+  sortOrder: 'asc' | 'desc' = 'desc',
+  role?: UserRole
 ): Promise<OrdersListResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -1893,9 +1945,11 @@ export const getAllOrders = async (
     params.append('status', filters.status);
   }
 
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/orders?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -1921,8 +1975,86 @@ export const getOrderById = async (orderId: string): Promise<OrderDetailsRespons
   return await response.json();
 };
 
+// Vendor approve order
+export interface VendorApproveOrderRequest {
+  notes?: string;
+}
+
+export interface VendorApproveOrderResponse {
+  success: boolean;
+  message: string;
+  data: OrderData;
+}
+
+export const approveVendorOrder = async (
+  orderId: string,
+  notes?: string
+): Promise<VendorApproveOrderResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/orders/vendor/${orderId}/approve`, {
+    method: 'PUT',
+    headers: getAuthHeaders('vendor'),
+    body: JSON.stringify({
+      ...(notes && { notes }),
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to approve order' }));
+    throw new Error(error.message || 'Failed to approve order');
+  }
+
+  return await response.json();
+};
+
+// Vendor reject order
+export interface VendorRejectOrderRequest {
+  notes: string;
+}
+
+export interface VendorRejectOrderResponse {
+  success: boolean;
+  message: string;
+  data: OrderData;
+}
+
+export const rejectVendorOrder = async (
+  orderId: string,
+  notes: string
+): Promise<VendorRejectOrderResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/orders/vendor/${orderId}/reject`, {
+    method: 'PUT',
+    headers: getAuthHeaders('vendor'),
+    body: JSON.stringify({ notes }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to reject order' }));
+    throw new Error(error.message || 'Failed to reject order');
+  }
+
+  return await response.json();
+};
+
+// Update order status (Vendor can approve orders)
+export const updateOrder = async (orderId: string, updates: { status?: string; notes?: string }, role?: UserRole): Promise<{ success: boolean; data: OrderData }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'vendor';
+  
+  const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(userRole),
+    body: JSON.stringify(updates),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to update order' }));
+    throw new Error(error.message || 'Failed to update order');
+  }
+
+  return await response.json();
+};
+
 // Verify payment
-export interface VerifyPaymentResponse {
+export interface VerifyOrderPaymentResponse {
   success: boolean;
   message: string;
   data: {
@@ -1936,7 +2068,7 @@ export const verifyPayment = async (
   razorpay_payment_id: string,
   razorpay_signature: string,
   orderId: string
-): Promise<VerifyPaymentResponse> => {
+): Promise<VerifyOrderPaymentResponse> => {
   const response = await fetch(`${API_BASE_URL}/api/orders/verify-payment`, {
     method: 'POST',
     headers: getAuthHeaders('company'),
@@ -2204,10 +2336,11 @@ export interface CreateDeliveryPartnerRequest {
 }
 
 // Create delivery partner
-export const createDeliveryPartner = async (data: CreateDeliveryPartnerRequest): Promise<{ success: boolean; data: DeliveryPartner }> => {
+export const createDeliveryPartner = async (data: CreateDeliveryPartnerRequest, role?: UserRole): Promise<{ success: boolean; data: DeliveryPartner }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners`, {
     method: 'POST',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify(data),
   });
 
@@ -2237,9 +2370,11 @@ export const getAllDeliveryPartners = async (
     params.append('vehicleType', filters.vehicleType);
   }
 
+  const userRole = normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -2251,10 +2386,11 @@ export const getAllDeliveryPartners = async (
 };
 
 // Get delivery partner by ID
-export const getDeliveryPartnerById = async (partnerId: string): Promise<{ success: boolean; data: DeliveryPartner }> => {
+export const getDeliveryPartnerById = async (partnerId: string, role?: UserRole): Promise<{ success: boolean; data: DeliveryPartner }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -2268,11 +2404,13 @@ export const getDeliveryPartnerById = async (partnerId: string): Promise<{ succe
 // Update delivery partner
 export const updateDeliveryPartner = async (
   partnerId: string,
-  data: Partial<CreateDeliveryPartnerRequest> & { isActive?: boolean; rating?: number }
+  data: Partial<CreateDeliveryPartnerRequest> & { isActive?: boolean; rating?: number },
+  role?: UserRole
 ): Promise<{ success: boolean; data: DeliveryPartner }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify(data),
   });
 
@@ -2285,10 +2423,11 @@ export const updateDeliveryPartner = async (
 };
 
 // Delete delivery partner
-export const deleteDeliveryPartner = async (partnerId: string): Promise<{ success: boolean }> => {
+export const deleteDeliveryPartner = async (partnerId: string, role?: UserRole): Promise<{ success: boolean }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}`, {
     method: 'DELETE',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -2300,10 +2439,16 @@ export const deleteDeliveryPartner = async (partnerId: string): Promise<{ succes
 };
 
 // Assign delivery partner to order
-export const assignDeliveryPartner = async (orderId: string, deliveryPartnerId: string): Promise<{ success: boolean; data: OrderData }> => {
+// Assign delivery partner to order
+// NOTE: Backend must verify:
+// 1. Invoice exists for this order
+// 2. invoice.payment.paymentStatus === "completed"
+// 3. Delivery partner is active
+export const assignDeliveryPartner = async (orderId: string, deliveryPartnerId: string, role?: UserRole): Promise<{ success: boolean; data: OrderData }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners/assign/${orderId}`, {
     method: 'PUT',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
     body: JSON.stringify({ deliveryPartnerId }),
   });
 
@@ -2316,10 +2461,11 @@ export const assignDeliveryPartner = async (orderId: string, deliveryPartnerId: 
 };
 
 // Remove delivery partner from order
-export const removeDeliveryPartner = async (orderId: string): Promise<{ success: boolean; data: OrderData }> => {
+export const removeDeliveryPartner = async (orderId: string, role?: UserRole): Promise<{ success: boolean; data: OrderData }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners/assign/${orderId}`, {
     method: 'DELETE',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -2335,7 +2481,8 @@ export const getDeliveryPartnerOrders = async (
   partnerId: string,
   page: number = 1,
   limit: number = 10,
-  status?: string
+  status?: string,
+  role?: UserRole
 ): Promise<OrdersListResponse> => {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -2346,9 +2493,11 @@ export const getDeliveryPartnerOrders = async (
     params.append('status', status);
   }
 
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
   const response = await fetch(`${API_BASE_URL}/api/delivery-partners/${partnerId}/orders?${params.toString()}`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -2447,10 +2596,11 @@ export interface AdminDashboard {
 }
 
 // Get admin dashboard
-export const getAdminDashboard = async (): Promise<{ success: boolean; data: AdminDashboard }> => {
+export const getAdminDashboard = async (role?: UserRole): Promise<{ success: boolean; data: AdminDashboard }> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
   const response = await fetch(`${API_BASE_URL}/api/admin/dashboard`, {
     method: 'GET',
-    headers: getAuthHeaders('admin'),
+    headers: getAuthHeaders(userRole),
   });
 
   if (!response.ok) {
@@ -2460,3 +2610,514 @@ export const getAdminDashboard = async (): Promise<{ success: boolean; data: Adm
 
   return await response.json();
 };
+
+// Get company dashboard
+export const getCompanyDashboard = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/api/company/dashboard`, {
+    method: 'GET',
+    headers: getAuthHeaders('company'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch company dashboard' }));
+    throw new Error(error.message || 'Failed to fetch company dashboard');
+  }
+
+  return await response.json();
+};
+
+// ============================================
+// INVOICE API ENDPOINTS
+// ============================================
+
+export interface InvoicePayment {
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  amount?: number; // in paise
+  currency: string;
+  paymentStatus: 'pending' | 'completed' | 'failed';
+  paidAt?: string;
+}
+
+export interface InvoiceItem {
+  product?: {
+    id?: string;
+    _id?: string;
+    name?: string;
+    gstSlab?: number;
+  } | string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  pricePerUnit?: number;
+  unitPrice?: number;
+  totalPrice: number;
+  gstRate?: number;
+  gstAmount?: number;
+  amount?: number;
+  gst?: number;
+}
+
+export interface InvoiceData {
+  id: string;
+  _id?: string;
+  invoiceNumber: string;
+  orderId: string;
+  order?: any;
+  companyDetails?: any;
+  companyId?: string;
+  company?: any;
+  branchId?: string;
+  branch?: any;
+  vendorId?: string;
+  vendor?: any;
+  items: InvoiceItem[];
+  subtotal: number;
+  totalGst?: number;
+  totalGST?: number;
+  grandTotal: number;
+  status?: 'draft' | 'issued' | 'paid' | 'cancelled';
+  paymentStatus?: 'pending' | 'completed' | 'failed';
+  payment?: InvoicePayment;
+  deliveryChallans?: any[];
+  deliveryChallan?: any;
+  notes?: string;
+  createdBy?: {
+    id?: string;
+    _id?: string;
+    name: string;
+    email: string;
+    role?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ===== DELIVERY CHALLAN =====
+
+export interface DeliveryChallanItem {
+  _id?: string;
+  product?: {
+    _id?: string;
+    sku?: string;
+    brand?: string;
+    productName?: string;
+    images?: Array<{
+      url: string;
+      publicId?: string;
+      _id?: string;
+    }>;
+    category?: string;
+    subCategory?: string;
+  } | string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  pricePerUnit?: number;
+  unitPrice?: number;
+  totalPrice: number;
+}
+
+export interface DeliveryChallanData {
+  _id?: string;
+  id?: string;
+  challanNumber: string;
+  orderId: string;
+  order?: {
+    _id: string;
+    totalAmount: number;
+    status: string;
+    vendorApprovalStatus?: string;
+    createdAt: string;
+    orderNumber: string;
+  };
+  company?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+    companyLocation?: string;
+  };
+  vendor?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+    vendorLocation?: string;
+  };
+  branch?: {
+    _id?: string;
+    branchName?: string;
+    address?: string;
+  };
+  items: DeliveryChallanItem[];
+  totalItems?: number;
+  subtotal?: number;
+  status?: string;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: any;
+}
+
+export interface GetDeliveryChallansResponse {
+  success: boolean;
+  count: number;
+  totalChallans: number;
+  totalPages: number;
+  currentPage: number;
+  data: DeliveryChallanData[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+// Get all delivery challans
+export const getDeliveryChallans = async (
+  page: number = 1,
+  limit: number = 50
+): Promise<GetDeliveryChallansResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  const userRole = normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/delivery-challan/all?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders(userRole),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch delivery challans' }));
+    throw new Error(error.message || 'Failed to fetch delivery challans');
+  }
+
+  return await response.json();
+};
+
+// Get vendor's delivery challans
+export interface GetVendorChallansResponse {
+  success: boolean;
+  count: number;
+  totalChallans: number;
+  totalPages: number;
+  currentPage: number;
+  data: DeliveryChallanData[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+export const getVendorChallans = async (
+  page: number = 1,
+  limit: number = 10,
+  status?: string
+): Promise<GetVendorChallansResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (status) {
+    params.append('status', status);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/delivery-challan/vendor/my-challans?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders('vendor'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch vendor challans' }));
+    throw new Error(error.message || 'Failed to fetch vendor challans');
+  }
+
+  return await response.json();
+};
+
+// Get delivery challan details
+export interface GetChallanDetailsResponse {
+  success: boolean;
+  data: DeliveryChallanData;
+}
+
+export const getChallanDetails = async (
+  orderId: string
+): Promise<GetChallanDetailsResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/delivery-challan/order/${orderId}`, {
+    method: 'GET',
+    headers: getAuthHeaders('vendor'),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch challan details' }));
+    throw new Error(error.message || 'Failed to fetch challan details');
+  }
+
+  return await response.json();
+};
+
+// Create delivery challan
+export interface CreateDeliveryChallanRequest {
+  orderId: string;
+}
+
+export interface CreateDeliveryChallanResponse {
+  success: boolean;
+  message: string;
+  data: DeliveryChallanData;
+}
+
+export const createDeliveryChallan = async (
+  orderId: string
+): Promise<CreateDeliveryChallanResponse> => {
+  const userRole = normalizeRole(getUserData()?.role) || 'vendor';
+
+  const response = await fetch(`${API_BASE_URL}/api/delivery-challan`, {
+    method: 'POST',
+    headers: getAuthHeaders(userRole),
+    body: JSON.stringify({ orderId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create delivery challan' }));
+    throw new Error(error.message || 'Failed to create delivery challan');
+  }
+
+  return await response.json();
+};
+
+// ===== INVOICES =====
+
+export interface CreateInvoiceRequest {
+  orderId: string;
+  notes?: string;
+}
+
+export interface CreateInvoiceResponse {
+  success: boolean;
+  message: string;
+  data: InvoiceData;
+}
+
+export interface GetInvoicesResponse {
+  success: boolean;
+  count: number;
+  totalInvoices: number;
+  totalPages: number;
+  currentPage: number;
+  data: InvoiceData[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalRecords: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+export interface GetInvoiceResponse {
+  success: boolean;
+  data: InvoiceData;
+}
+
+export interface VerifyPaymentRequest {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+  invoiceId: string;
+}
+
+export interface VerifyPaymentResponse {
+  success: boolean;
+  message: string;
+  data: InvoiceData;
+}
+
+export interface CancelInvoiceRequest {
+  reason: string;
+}
+
+export interface CancelInvoiceResponse {
+  success: boolean;
+  message: string;
+  data: InvoiceData;
+}
+
+// Create Invoice (Admin/Sub-Admin only)
+export const createInvoice = async (req: CreateInvoiceRequest): Promise<CreateInvoiceResponse> => {
+  const userRole = normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/invoices`, {
+    method: 'POST',
+    headers: getAuthHeaders(userRole),
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create invoice' }));
+    throw new Error(error.message || 'Failed to create invoice');
+  }
+
+  return await response.json();
+};
+
+// Get all invoices (with filters)
+export const getInvoices = async (
+  filters?: {
+    status?: string;
+    companyId?: string;
+    startDate?: string;
+    endDate?: string;
+  },
+  page: number = 1,
+  limit: number = 10,
+  role?: UserRole
+): Promise<GetInvoicesResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.companyId) params.append('companyId', filters.companyId);
+  if (filters?.startDate) params.append('startDate', filters.startDate);
+  if (filters?.endDate) params.append('endDate', filters.endDate);
+
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/invoices?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders(userRole),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch invoices' }));
+    throw new Error(error.message || 'Failed to fetch invoices');
+  }
+
+  return await response.json();
+};
+
+// Get invoice by ID
+export const getInvoiceById = async (invoiceId: string, role?: UserRole): Promise<GetInvoiceResponse> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(userRole),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch invoice' }));
+    throw new Error(error.message || 'Failed to fetch invoice');
+  }
+
+  return await response.json();
+};
+
+// Get invoice by order ID
+export const getInvoiceByOrderId = async (orderId: string, role?: UserRole): Promise<GetInvoiceResponse> => {
+  const userRole = role || normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/invoices/order/${orderId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(userRole),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch invoice' }));
+    throw new Error(error.message || 'Failed to fetch invoice');
+  }
+
+  return await response.json();
+};
+
+// Verify payment (Company users only)
+export const verifyInvoicePayment = async (req: VerifyPaymentRequest): Promise<VerifyPaymentResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/invoices/verify-payment`, {
+    method: 'POST',
+    headers: getAuthHeaders('company'),
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to verify payment' }));
+    throw new Error(error.message || 'Failed to verify payment');
+  }
+
+  return await response.json();
+};
+
+// Cancel invoice (Admin/Sub-Admin only)
+export const cancelInvoice = async (invoiceId: string, req: CancelInvoiceRequest): Promise<CancelInvoiceResponse> => {
+  const userRole = normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/cancel`, {
+    method: 'PUT',
+    headers: getAuthHeaders(userRole),
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to cancel invoice' }));
+    throw new Error(error.message || 'Failed to cancel invoice');
+  }
+
+  return await response.json();
+};
+
+// Delete invoice (Admin/Sub-Admin only, only if unpaid)
+export const deleteInvoice = async (invoiceId: string): Promise<{ success: boolean; message: string }> => {
+  const userRole = normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(userRole),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete invoice' }));
+    throw new Error(error.message || 'Failed to delete invoice');
+  }
+
+  return await response.json();
+};
+
+// Get approved orders for invoice creation
+export const getApprovedOrders = async (
+  page: number = 1,
+  limit: number = 50
+): Promise<OrdersListResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    status: 'approved',
+  });
+
+  const userRole = normalizeRole(getUserData()?.role) || 'admin';
+
+  const response = await fetch(`${API_BASE_URL}/api/orders?${params.toString()}`, {
+    method: 'GET',
+    headers: getAuthHeaders(userRole),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch approved orders' }));
+    throw new Error(error.message || 'Failed to fetch approved orders');
+  }
+
+  return await response.json();
+};
+

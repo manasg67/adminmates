@@ -13,6 +13,7 @@ import {
   Package,
   Truck,
   ShoppingCart,
+  FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -45,6 +46,7 @@ export function AdminSidebar({
   const [isLoading, setIsLoading] = useState(true)
   const user = getUserData()
   const isAdmin = user?.role === 'admin'
+  const isSubAdmin = user?.role === 'sub-admin'
 
   // Handle logout
   const handleLogout = (e: React.MouseEvent) => {
@@ -92,44 +94,60 @@ export function AdminSidebar({
 
   // Dynamic nav items with badges
   const navItems = [
+      ...(isAdmin ? [
     {
       title: "Dashboard",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
     },
-    {
-      title: "Companies",
-      href: "/admin/companies",
-      icon: Building2,
-      badge: pendingCompaniesCount > 0 ? pendingCompaniesCount.toString() : undefined,
-    },
-    {
-      title: "Vendors",
-      href: "/admin/vendors",
-      icon: Users,
-      badge: pendingVendorsCount > 0 ? pendingVendorsCount.toString() : undefined,
-    },
-    {
-      title: "Product Approval",
-      href: "/admin/product-approval",
-      icon: Package,
-    },
-    {
-      title: "Orders",
-      href: "/admin/orders",
-      icon: ShoppingCart,
-    },
-    {
-      title: "Delivery Partners",
-      href: "/admin/delivery-partners",
-      icon: Truck,
-    },
-    ...(isAdmin ? [{
-      title: "Add Sub-Admin",
-      href: "/admin/sub-admins",
-      icon: Users,
-    }] : []),
+        ] : []),
 
+    ...(isAdmin || isSubAdmin ? [
+      {
+        title: "Companies",
+        href: "/admin/companies",
+        icon: Building2,
+        badge: pendingCompaniesCount > 0 ? pendingCompaniesCount.toString() : undefined,
+      },
+      {
+        title: "Vendors",
+        href: "/admin/vendors",
+        icon: Users,
+        badge: pendingVendorsCount > 0 ? pendingVendorsCount.toString() : undefined,
+      },
+      {
+        title: "Product Approval",
+        href: "/admin/product-approval",
+        icon: Package,
+      },
+            {
+        title: "Orders",
+        href: "/admin/orders",
+        icon: ShoppingCart,
+      },
+      {
+        title: "Delivery Challans",
+        href: "/admin/challans",
+        icon: Truck,
+      },
+      {
+        title: "Invoices",
+        href: "/admin/invoices",
+        icon: FileText,
+      },
+      {
+        title: "Delivery Partners",
+        href: "/admin/delivery-partners",
+        icon: Truck,
+      },
+    ] : []),
+    ...(isAdmin ? [
+      {
+        title: "Add Sub-Admin",
+        href: "/admin/sub-admins",
+        icon: Users,
+      },
+    ] : []),
   ]
 
   return (
