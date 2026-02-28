@@ -204,7 +204,7 @@ export default function LandingPage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-white/40 text-white hover:bg-white/10 dark:hover:bg-white/5 text-lg px-8 py-7 font-semibold rounded-xl backdrop-blur-sm font-black"
+                className="border-white/50 bg-white/10 text-white hover:bg-white hover:text-slate-900 text-lg px-8 py-7 font-semibold rounded-xl backdrop-blur-sm font-black transition-all duration-300"
               >
                 Watch Demo
               </Button>
